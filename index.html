@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+	<meta charset="utf-8">
+	<title>Ouais t'inquiètes</title>
+
+	<link rel="icon" href="assets/favicon.png" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+	<link href="css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+	<div id="app">
+
+		<div class="game">
+
+			<div class="left-panel">
+
+				<div class="discard-area">
+					<p>Cimetière</p>
+
+					<div class="discard-pile" @click.stop="openDiscardView">
+
+						<div class="discard-animation-target"></div>
+
+						<img v-for="discardCard in visibleDiscardStack" :key="discardCard.stackKey"
+							class="stacked-card discard-card-front" :src="discardCard.image"
+							:style="discardCard.style" />
+
+						<span v-if="discardPile.length === 0" class="empty-pile-text">
+							Vide
+						</span>
+
+					</div>
+
+					<button class="shuffle-button" @click="resetAndShuffleDeck">
+						Remélanger
+					</button>
+
+					<button class="shuffle-button" @click="clearPlayArea">
+						Nettoyer
+					</button>
+
+					<div class="discard-stats">
+						<p>🃏 {{ cardsText(totalPlayedCardsForSips) }}</p>
+						<p>🍻 {{ sipsText(discardSips) }}</p>
+					</div>
+
+					<div class="ace-mode-container">
+
+						<button class="ace-mode-button" @click="toggleAceMode"
+							@contextmenu.prevent="aceMenuOpen = !aceMenuOpen">
+							As : {{ aceModeLabel }}
+						</button>
+
+						<div v-if="aceMenuOpen" class="ace-mode-menu">
+
+							<button @click="setAceMode('high')">
+								⬆️ As fort
+							</button>
+
+							<button @click="setAceMode(null)">
+								❔ As indéfini
+							</button>
+
+							<button @click="setAceMode('low')">
+								⬇️ As faible
+							</button>
+
+						</div>
+
+					</div>
+
+				</div>
+
+				<div class="bottom-left-area">
+
+					<p class="cards-counter">
+						{{ cardsRemaining }} / {{ deckSize }}
+					</p>
+
+					<div class="deck" @click="handleDeckLeftClick" @contextmenu.prevent="drawCardFaceDown">
+
+						<img v-for="cardBack in visibleDeckStack" :key="cardBack.id" class="stacked-card deck-card-back"
+							:src="cardBack.image" :style="cardBack.style" />
+
+					</div>
+
+				</div>
+
+			</div>
+
+			<div class="draw-area" :style="playmatStyle" :class="{
+		'play-area-success': playAreaFeedback === 'success',
+		'play-area-fail': playAreaFeedback === 'fail'
+	}">
+
+				<div class="battle-stack-target"></div>
+
+				<div v-if="secondLifeMode" class="second-life-title">
+					Qui gagne ?!
+				</div>
+
+				<div v-if="secondLifeResultPop" class="second-life-result-pop" :class="secondLifeResultPop.type">
+					{{ secondLifeResultPop.text }}
+				</div>
+
+				<div v-if="secondLifeChoicePop" class="second-life-choice-pop" :style="secondLifeChoicePop.style">
+					Celle-là !
+				</div>
+
+				<div class="cards-container" :style="overlapCardStyle">
+
+					<div class="card" v-for="(card, index) in cardsInPlay" :key="card.uniqueKey"
+						:data-card-key="card.uniqueKey" :style="getTableCardStyle(card, index)" :class="{
+							invisible: card.invisible,
+							'hidden-card': !card.faceUp,
+							'battle-matched-card': card.battleMatched,
+							'battle-card': battleMode,
+							'second-life-card': card.secondLifeCard,
+						}" @click="handleTableCardClick(card)">
+						<div class="table-card-inner" :class="{ flipped: card.faceUp }">
+							<img class="table-card-face table-card-back" :src="backCardImage" />
+
+							<img class="table-card-face table-card-front" :src="card.image" />
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+
+			<div class="flying-cards-layer">
+
+				<div v-for="flyingCard in flyingCards" :key="flyingCard.id" class="flying-card"
+					:class="{ 'battle-flying-card': flyingCard.battleFlying }" :style="getFlyingCardStyle(flyingCard)">
+					<div class="flying-card-rotator" :class="{ flipped: flyingCard.flipped }">
+						<img class="flying-card-face flying-card-back" :src="flyingCard.backImage" />
+
+						<img class="flying-card-face flying-card-front" :src="flyingCard.frontImage" />
+					</div>
+				</div>
+
+			</div>
+
+			<div class="players-panel">
+
+				<h2>Joueurs</h2>
+
+				<button class="settings-button" @click="settingsOpen = true">
+					⚙
+				</button>
+
+				<div class="players-list">
+
+					<div class="player-card" v-for="player in players" :key="player.id" :class="[
+	{ active: !battleMode && currentPlayer && currentPlayer.id === player.id },
+	getBattlePlayerResultClass(player)
+]">
+						<div class="player-main-line">
+
+							<p>{{ player.name }}</p>
+
+							<div v-if="battleMode && battleChoices[player.id]" class="player-battle-choice-inline"
+								:class="getBattleChoiceColorClass(battleChoices[player.id])">
+								{{ getBattleChoiceLabel(battleChoices[player.id]) }}
+							</div>
+
+							<div v-if="battleMode && battleChoices[player.id] && battleChoices[player.id].found"
+								class="battle-found-counter" :class="getBattlePlayerResultClass(player)">
+								#{{ battleChoices[player.id].foundOrder }}
+							</div>
+
+						</div>
+
+						<p>❤️ {{ player.hp }}</p>
+						<p>🃏 {{ cardsText(getPlayerPlayedCardsCount(player.id)) }}</p>
+
+						<div class="player-bottom-line">
+
+							<p>🍺 {{ sipsText(player.sessionSips || 0) }}</p>
+
+							<div class="player-interrupt-buttons">
+
+								<button class="player-mini-button rot-button" :disabled="!canPlayForcedFreres()"
+									@click.stop="forceInterruptMove(player, 'freres')">
+									rot
+								</button>
+
+								<button class="player-mini-button bouffon-button" :disabled="!canPlayForcedBouffon()"
+									@click.stop="forceInterruptMove(player, 'bouffon')">
+									7
+								</button>
+
+							</div>
+
+						</div>
+					</div>
+
+					<div class="player-card add-player-card" @click="addPlayer">
+						<span>+</span>
+					</div>
+
+				</div>
+
+				<button v-if="!battleMode" class="next-turn-button" @click="nextTurn"
+					:disabled="!shiftPressed && (cardsPlayedThisTurn < 3 || turnFailed)">
+					Passer le tour ({{ cardsPlayedThisTurn }}/3)
+				</button>
+
+				<button v-if="!battleMode && !secondLifeMode" class="death-button"
+					:class="{ 'death-button-alert': turnFailed }" @click="handlePlayerDeath(currentPlayer)">
+					☠️ Perte du joueur
+				</button>
+
+			</div>
+
+			<div class="action-bar">
+
+				<button v-if="battleRoyaleAvailable" class="battle-royale-button" @click="openBattleRoyaleSetup">
+					BATTLE ROYALE
+				</button>
+
+				<div v-else-if="battleMode && battleLoserId && battleRevealFinished" class="battle-controls">
+					<button @click="openBattleStackView">
+						Visionner les cartes
+					</button>
+
+					<button @click="restartGame">
+						Relancer
+					</button>
+				</div>
+
+				<div v-else-if="battleMode" class="battle-status">
+					Battle Royale en cours...
+				</div>
+
+				<template v-else>
+
+					<button class="debug-button" @click="debugSecondLifeBattle">
+						Debug bataille
+					</button>
+
+					<button class="debug-button" @click="debugDealAllCards">
+						Debug : tout poser
+					</button>
+
+					<button v-for="action in actions" :key="action.id" :disabled="secondLifeMode"
+						@click="executeAction(action.id)">
+						{{ action.label }}
+					</button>
+
+				</template>
+
+			</div>
+
+		</div>
+
+		<div v-if="discardViewOpen" class="discard-view-overlay" @click.self="closeDiscardView">
+			<div class="discard-view">
+
+				<button class="close-discard-view" @click="closeDiscardView">×</button>
+
+				<h2>Cimetière</h2>
+
+				<div class="discard-fan" @mousemove="updateHoveredDiscardCard"
+					@mouseleave="hoveredDiscardCardIndex = null">
+					<div v-for="(card, index) in discardPile" :key="card.uniqueKey + '-fan'"
+						class="discard-fan-card-wrapper" :style="getDiscardFanCardStyle(index)">
+						<img class="discard-fan-card" :class="{ 'battle-fan-card-holo': card && card.battleMatched }"
+							:src="card.image" />
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+		<div v-if="battleSetupOpen" class="battle-setup-overlay">
+			<div class="battle-setup">
+
+				<h2>BATTLE ROYALE</h2>
+
+				<p>{{ battleCurrentPlayer.name }} choisit sa carte</p>
+
+				<div class="battle-selects">
+
+					<select v-model="battleSelectedValue">
+						<option v-for="value in battleValues" :key="value.id" :value="value.id"
+							:disabled="isBattleValueFullyTaken(value.id)">
+							{{ value.label }}
+						</option>
+					</select>
+
+					<select v-model="battleSelectedSuit" :class="getBattleSuitColorClass(battleSelectedSuit)">
+						<option v-for="suit in battleSuits" :key="suit.id" :value="suit.id"
+							:disabled="isBattleCardTaken(battleSelectedValue, suit.id)"
+							:class="getBattleSuitColorClass(suit.id)">
+							{{ suit.label }}
+						</option>
+					</select>
+
+					<button class="battle-random-button" @click="randomizeBattleChoice">
+						🎲
+					</button>
+
+				</div>
+
+				<button @click="confirmBattleChoice">
+					Valider
+				</button>
+
+			</div>
+		</div>
+
+		<div v-if="battleStackViewOpen" class="discard-view-overlay" @click.self="closeBattleStackView">
+			<div class="discard-view">
+
+				<button class="close-discard-view" @click="closeBattleStackView">×</button>
+
+				<h2>Tas Battle Royale</h2>
+
+				<div class="discard-fan" @mousemove="updateHoveredBattleStackCard"
+					@mouseleave="hoveredBattleStackCardIndex = null">
+					<div v-for="(card, index) in cardsInPlay" :key="card.uniqueKey + '-battle-fan'"
+						class="discard-fan-card-wrapper" :style="getBattleStackFanCardStyle(index)">
+						<img class="discard-fan-card" :class="{ 'battle-fan-card-holo': card && card.battleMatched }"
+							:src="card.image" />
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+		<div v-if="gamePopup.open" class="game-popup-overlay">
+			<div class="game-popup">
+
+				<button class="game-popup-close" @click="closeGamePopup">×</button>
+
+				<h2 v-if="gamePopup.title">
+					{{ gamePopup.title }}
+				</h2>
+
+				<p v-if="gamePopup.message" class="game-popup-message">
+					{{ gamePopup.message }}
+				</p>
+
+				<div v-if="gamePopup.sips !== null && gamePopup.shots !== null" class="popup-stats">
+
+					<div class="popup-stat-card">
+						<div class="popup-stat-icon">🍺</div>
+
+						<div class="popup-stat-content">
+							<div class="popup-stat-value">{{ gamePopup.sips }}</div>
+							<div class="popup-stat-label">Gorgées</div>
+						</div>
+					</div>
+
+					<div class="popup-stat-separator">
+						OU
+					</div>
+
+					<div class="popup-stat-card">
+						<div class="popup-stat-icon">🥃</div>
+
+						<div class="popup-stat-content">
+							<div class="popup-stat-value">{{ gamePopup.shots }}</div>
+
+							<div class="popup-stat-label">
+								Shot<span v-if="gamePopup.shots > 1">s</span>
+							</div>
+
+							<div v-if="gamePopup.remainingSips > 0" class="popup-stat-extra">
+								+ {{ gamePopup.remainingSips }} 🍺
+							</div>
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+		</div>
+
+		<div v-if="choicePopup.open" class="choice-popup-overlay" @click.self="closeChoicePopup">
+			<div class="choice-popup">
+
+				<button class="choice-popup-close" @click="closeChoicePopup">
+					×
+				</button>
+
+				<h2>{{ choicePopup.title }}</h2>
+
+				<p v-if="choicePopup.message">
+					{{ choicePopup.message }}
+				</p>
+
+				<div v-if="choicePopup.type === 'buttons'" class="choice-popup-buttons">
+					<button v-for="option in choicePopup.options" :key="option.value" :class="option.className"
+						@click="confirmChoice(option.value)">
+						{{ option.label }}
+					</button>
+				</div>
+
+				<div v-if="choicePopup.type === 'card'" class="choice-popup-card-select">
+					<select v-model="choicePopup.selectedValue">
+						<option v-for="value in battleValues" :key="value.id" :value="value.id">
+							{{ value.label }}
+						</option>
+					</select>
+
+					<select v-model="choicePopup.selectedSuit"
+						:class="getBattleSuitColorClass(choicePopup.selectedSuit)">
+						<option v-for="suit in battleSuits" :key="suit.id" :value="suit.id"
+							:class="getBattleSuitColorClass(suit.id)">
+							{{ suit.label }}
+						</option>
+					</select>
+
+					<button @click="confirmChoice({
+				value: choicePopup.selectedValue,
+				suit: choicePopup.selectedSuit
+			})">
+						Valider
+					</button>
+				</div>
+
+			</div>
+		</div>
+
+		<div v-if="settingsOpen" class="settings-overlay" @click.self="settingsOpen = false">
+			<div class="settings-window">
+
+				<button class="settings-close" @click="settingsOpen = false">
+					×
+				</button>
+
+				<h2>Options</h2>
+
+				<div class="settings-row">
+					<label>Style de cartes</label>
+
+					<select v-model="cardTheme">
+						<option v-for="theme in availableCardThemes" :key="theme.id" :value="theme.id">
+							{{ theme.label }}
+						</option>
+					</select>
+				</div>
+
+				<div class="settings-row settings-column">
+					<label>Couleur du tapis</label>
+
+					<div class="playmat-color-grid">
+						<label>
+							Haut
+							<input type="color" v-model="playmatColors.main">
+						</label>
+
+						<label>
+							Milieu
+							<input type="color" v-model="playmatColors.mid">
+						</label>
+
+						<label>
+							Bas
+							<input type="color" v-model="playmatColors.dark">
+						</label>
+					</div>
+				</div>
+
+				<div class="settings-row settings-column">
+					<label>Presets tapis</label>
+
+					<div class="playmat-preset-row">
+						<select v-model="selectedPlaymatPresetId">
+							<option v-for="preset in playmatPresets" :key="preset.id" :value="preset.id">
+								{{ preset.name }}
+							</option>
+						</select>
+
+						<button @click="applySelectedPlaymatPreset">
+							Appliquer
+						</button>
+					</div>
+
+					<div class="playmat-preset-row">
+						<input type="text" v-model="playmatPresetName" placeholder="Nom du preset">
+
+						<button @click="savePlaymatPreset">
+							Enregistrer
+						</button>
+					</div>
+				</div>
+
+				<div class="settings-row">
+					<label>Pop-up de résultat</label>
+
+					<button class="settings-toggle" :class="{ active: gamePopupsEnabled }"
+						@click="gamePopupsEnabled = !gamePopupsEnabled">
+						{{ gamePopupsEnabled ? "Activées" : "Désactivées" }}
+					</button>
+				</div>
+
+			</div>
+		</div>
+
+	</div>
+
+	<script src="js/script.js"></script>
+
+</body>
+
+</html>
