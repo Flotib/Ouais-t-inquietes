@@ -155,57 +155,140 @@
 					⚙
 				</button>
 
-				<div class="players-list">
+				<transition-group name="player-reorder" tag="div" class="players-list" :class="{
+	'player-list-dragging': draggingPlayerId,
+	'player-list-edit-mode': shiftPressed
+}" :css="playerReorderAnimationsEnabled" @scroll="updateSipAnimationPositions" @dragenter.prevent="allowPlayerDrop"
+					@dragover.prevent="updatePlayerInsertPositionFromList" @drop.prevent="dropPlayerAtInsertIndex">
 
-					<div class="player-card" v-for="player in players" :key="player.id" :class="[
-	{ active: !battleMode && currentPlayer && currentPlayer.id === player.id },
-	getBattlePlayerResultClass(player)
-]">
-						<div class="player-main-line">
+					<template v-for="(player, playerIndex) in players">
 
-							<p>{{ player.name }}</p>
-
-							<div v-if="battleMode && battleChoices[player.id]" class="player-battle-choice-inline"
-								:class="getBattleChoiceColorClass(battleChoices[player.id])">
-								{{ getBattleChoiceLabel(battleChoices[player.id]) }}
-							</div>
-
-							<div v-if="battleMode && battleChoices[player.id] && battleChoices[player.id].found"
-								class="battle-found-counter" :class="getBattlePlayerResultClass(player)">
-								#{{ battleChoices[player.id].foundOrder }}
-							</div>
-
+						<div v-if="shiftPressed && draggingPlayerId" :key="'drop-before-' + player.id"
+							class="player-drop-zone"
+							:class="{ 'player-drop-zone-active': dragInsertIndex === playerIndex }"
+							@dragenter.prevent="setPlayerInsertIndex(playerIndex, $event)"
+							@dragover.prevent="setPlayerInsertIndex(playerIndex, $event)"
+							@drop.prevent="dropPlayerAtInsertIndex">
+							<div class="player-insert-line"></div>
 						</div>
 
-						<p>❤️ {{ player.hp }}</p>
-						<p>🃏 {{ cardsText(getPlayerPlayedCardsCount(player.id)) }}</p>
+						<div :key="player.id" class="player-card" :data-player-id="player.id" :class="[
+			{
+				active: !battleMode && currentPlayer && currentPlayer.id === player.id,
+				'player-dragging': draggingPlayerId === player.id,
+				'player-edit-mode': shiftPressed
+			},
+			getBattlePlayerResultClass(player)
+		]" :draggable="shiftPressed" @dragstart="startPlayerDrag(player, $event)" @dragenter.prevent="allowPlayerDrop"
+							@dragover.prevent="updatePlayerInsertPosition(playerIndex, $event)"
+							@drop.prevent="dropPlayerAtInsertIndex" @dragend="endPlayerDrag">
+							<button v-if="shiftPressed" class="player-delete-button" @click.stop="removePlayer(player)">
+								<span>×</span>
+							</button>
 
-						<div class="player-bottom-line">
+							<div v-if="shiftPressed" class="player-drag-handle" title="Déplacer le joueur"
+								draggable="true" @dragstart.stop="startPlayerDrag(player, $event)">
+								<span></span>
+								<span></span>
+								<span></span>
+								<span></span>
+								<span></span>
+								<span></span>
+							</div>
 
-							<p>🍺 {{ sipsText(player.sessionSips || 0) }}</p>
+							<div class="player-main-line">
 
-							<div class="player-interrupt-buttons">
+								<div class="player-name-row">
 
-								<button class="player-mini-button rot-button" :disabled="!canPlayForcedFreres()"
-									@click.stop="forceInterruptMove(player, 'freres')">
-									rot
-								</button>
+									<input v-if="editingPlayerId !== null && editingPlayerId === player.id"
+										ref="editPlayerInput" v-model="editingPlayerName" class="player-name-input"
+										@keyup.enter="confirmEditingPlayer(player)" @keyup.esc="cancelEditingPlayer"
+										@blur="confirmEditingPlayer(player)" />
 
-								<button class="player-mini-button bouffon-button" :disabled="!canPlayForcedBouffon()"
-									@click.stop="forceInterruptMove(player, 'bouffon')">
-									7
-								</button>
+									<template v-else>
+
+										<p class="player-name-text">
+											{{ player.name }}
+										</p>
+
+										<button class="player-edit-button" draggable="false"
+											@mousedown.prevent.stop="startEditingPlayer(player)">
+											✎
+										</button>
+
+									</template>
+
+								</div>
+
+								<div v-if="battleMode && battleChoices[player.id]" class="player-battle-choice-inline"
+									:class="getBattleChoiceColorClass(battleChoices[player.id])">
+									{{ getBattleChoiceLabel(battleChoices[player.id]) }}
+								</div>
+
+								<div v-if="battleMode && battleChoices[player.id] && battleChoices[player.id].found"
+									class="battle-found-counter" :class="getBattlePlayerResultClass(player)">
+									#{{ battleChoices[player.id].foundOrder }}
+								</div>
 
 							</div>
+
+							<p>❤️ {{ player.hp }}</p>
+							<p>🃏 {{ cardsText(getPlayerPlayedCardsCount(player.id)) }}</p>
+
+							<div class="player-bottom-line">
+
+								<p :key="'sips-stat-' + player.id + '-' + getSipStatAnimationKey(player.id)"
+									class="player-sips-stat"
+									:class="{ 'player-sips-stat-gain': hasActiveSipAnimation(player.id) }">
+									🍺 {{ sipsText(player.sessionSips || 0) }}
+								</p>
+
+								<div class="player-interrupt-buttons">
+
+									<button class="player-mini-button rot-button" :disabled="!canPlayForcedFreres()"
+										@click.stop="forceInterruptMove(player, 'freres')">
+										rot
+									</button>
+
+									<button class="player-mini-button bouffon-button"
+										:disabled="!canPlayForcedBouffon()"
+										@click.stop="forceInterruptMove(player, 'bouffon')">
+										7
+									</button>
+
+								</div>
+
+							</div>
+					</template>
+
+					<div v-if="shiftPressed && draggingPlayerId" key="player-drop-end-zone"
+						class="player-drop-zone player-drop-end-zone"
+						:class="{ 'player-drop-zone-active': dragInsertIndex === players.length }"
+						@dragenter.prevent="setPlayerInsertIndex(players.length, $event)"
+						@dragover.prevent="setPlayerInsertIndex(players.length, $event)"
+						@drop.prevent="dropPlayerAtInsertIndex">
+						<div class="player-insert-line"></div>
+					</div>
+
+					<div v-if="pendingPlayerCreation" key="pending-player"
+						class="player-card pending-player-card player-card-no-enter-animation" @click.stop>
+						<div class="player-main-line">
+
+							<input ref="pendingPlayerInput" class="player-name-input pending-player-input"
+								v-model="pendingPlayerName" placeholder="Nom du joueur"
+								@keydown.enter.prevent="confirmPendingPlayerCreation"
+								@keydown.esc.prevent="cancelPendingPlayerCreation" @blur="confirmPendingPlayerCreation"
+								@click.stop>
 
 						</div>
 					</div>
 
-					<div class="player-card add-player-card" @click="addPlayer">
+					<div v-else key="add-player" class="player-card add-player-card player-card-no-enter-animation"
+						@click.stop="addPlayer">
 						<span>+</span>
 					</div>
 
-				</div>
+				</transition-group>
 
 				<button v-if="!battleMode" class="next-turn-button" @click="nextTurn"
 					:disabled="!shiftPressed && (cardsPlayedThisTurn < 3 || turnFailed)">
@@ -247,6 +330,10 @@
 
 					<button class="debug-button" @click="debugDealAllCards">
 						Debug : tout poser
+					</button>
+
+					<button class="debug-button" @click="debugGiveRandomSips">
+						Debug +🍺 random
 					</button>
 
 					<button v-for="action in actions" :key="action.id" :disabled="secondLifeMode"
@@ -504,6 +591,105 @@
 				</div>
 
 			</div>
+		</div>
+
+		<div v-if="sipDistributionPopup.open" class="choice-popup-overlay">
+			<div class="choice-popup sip-popup">
+
+				<button class="choice-popup-close" @click="closeSipDistribution">
+					×
+				</button>
+
+				<h2>Distribuer les gorgées 🍺</h2>
+
+				<p>
+					Il reste
+					<strong>{{ sipDistributionPopup.remainingSips }}</strong>
+					gorgée(s) à distribuer.
+				</p>
+
+				<div class="sip-player-grid">
+
+					<div v-for="player in distributablePlayers" :key="player.id" class="sip-player-card">
+
+						<div class="sip-player-name">
+							{{ player.name }}
+						</div>
+
+						<div class="sip-player-count">
+							{{ getDistributedSips(player.id) }}
+						</div>
+
+						<div class="sip-buttons-row">
+
+							<button class="sip-round-button sip-minus" @click="removeSipFromPlayer(player)">
+								−
+							</button>
+
+							<button class="sip-round-button sip-plus" @click="addSipToPlayer(player)">
+								+
+							</button>
+
+						</div>
+
+						<button class="sip-all-button" @click="addAllSipsToPlayer(player)">
+							Tout
+						</button>
+
+					</div>
+
+				</div>
+
+				<button class="sip-validate-button" :disabled="sipDistributionPopup.remainingSips > 0"
+					@click="validateSipDistribution">
+					Valider
+				</button>
+
+			</div>
+		</div>
+
+		<div v-if="shotDistributionPopup.open" class="choice-popup-overlay">
+			<div class="choice-popup shot-popup">
+
+				<button class="choice-popup-close" @click="shotDistributionPopup.open = false">
+					×
+				</button>
+
+				<h2>Donner un shot 🥃</h2>
+
+				<p>
+					Choisis le joueur qui prend
+					<strong>{{ shotDistributionPopup.shots }}</strong>
+					shot.
+				</p>
+
+				<div class="shot-player-grid">
+
+					<button v-for="player in shotDistributablePlayers" :key="player.id" class="shot-player-button"
+						@click="giveShotsToPlayer(player)">
+						{{ player.name }}
+					</button>
+
+				</div>
+
+			</div>
+		</div>
+
+		<div class="sip-pop-layer">
+
+			<div v-for="animation in playerSipAnimations" v-show="animation.visible !== false" :key="animation.id"
+				class="player-sips-pop-anchor" :style="{
+			left: animation.x + 'px',
+			top: animation.y + 'px'
+		}">
+				<div class="player-sips-pop-outside" :style="{
+				'--sip-rotation': animation.rotation + 'deg',
+				'--sip-offset': animation.offset + 'px'
+			}">
+					+{{ animation.amount }}
+				</div>
+			</div>
+
 		</div>
 
 	</div>

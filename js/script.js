@@ -24,6 +24,36 @@ var app = new Vue({
 		secondLifeChoicePop: null,
 		secondLifeResultPop: null,
 
+		sipDistributionPopup: {
+			open: false,
+			totalSips: 0,
+			remainingSips: 0,
+			distributions: [],
+			playerId: null
+		},
+
+		shotDistributionPopup: {
+			open: false,
+			shots: 0,
+			playerId: null
+		},
+
+		playerSipAnimations: [],
+
+		playerSipStatAnimationKeys: {},
+
+		pendingPlayerCreation: false,
+		pendingPlayerName: "",
+
+		editingPlayerId: null,
+		editingPlayerName: "",
+
+		draggingPlayerId: null,
+		dragInsertIndex: null,
+		dragInsertPosition: null,
+
+		playerReorderAnimationsEnabled: false,
+
 		deck: [],
 
 		cardTheme: "classic",
@@ -35,6 +65,11 @@ var app = new Vue({
 		cardsInPlay: [],
 
 		flyingCards: [],
+
+		freresPredictionPopup: {
+			open: false,
+			callback: null
+		},
 
 		choicePopup: {
 			open: false,
@@ -191,6 +226,22 @@ var app = new Vue({
 	},
 
 	computed: {
+
+		distributablePlayers() {
+
+			return this.players.filter(player => {
+				return player.id !== this.sipDistributionPopup.playerId;
+			});
+
+		},
+
+		shotDistributablePlayers() {
+
+			return this.players.filter(player => {
+				return player.id !== this.shotDistributionPopup.playerId;
+			});
+
+		},
 
 		playmatStyle() {
 
@@ -420,6 +471,611 @@ var app = new Vue({
 	},
 
 	methods: {
+
+		allowPlayerDrop(event) {
+
+			if (!this.shiftPressed)
+				return;
+
+			if (!this.draggingPlayerId)
+				return;
+
+			if (event && event.dataTransfer) {
+				event.dataTransfer.dropEffect = "move";
+			}
+
+		},
+
+		startPlayerDrag(player, event) {
+
+			if (!this.shiftPressed)
+				return;
+
+			this.playerReorderAnimationsEnabled = true;
+
+			this.draggingPlayerId = player.id;
+
+			const currentIndex =
+				this.players.findIndex(existingPlayer => {
+					return existingPlayer.id === player.id;
+				});
+
+			this.dragInsertIndex = currentIndex;
+			this.dragInsertPosition = "before";
+
+			if (event && event.dataTransfer) {
+				event.dataTransfer.effectAllowed = "move";
+				event.dataTransfer.setData("text/plain", String(player.id));
+
+				if (event.dataTransfer.setDragImage) {
+					const playerCard = event.currentTarget.closest(".player-card");
+
+					if (playerCard) {
+						const dragImage = playerCard.cloneNode(true);
+
+						dragImage.classList.add("player-drag-preview");
+
+						dragImage.style.position = "fixed";
+						dragImage.style.left = "-9999px";
+						dragImage.style.top = "-9999px";
+						dragImage.style.width = playerCard.offsetWidth + "px";
+						dragImage.style.height = playerCard.offsetHeight + "px";
+						dragImage.style.margin = "0";
+						dragImage.style.pointerEvents = "none";
+
+						document.body.appendChild(dragImage);
+
+						event.dataTransfer.setDragImage(dragImage, 26, 26);
+
+						setTimeout(() => {
+							if (dragImage.parentNode) {
+								dragImage.parentNode.removeChild(dragImage);
+							}
+						}, 0);
+					}
+				}
+			}
+
+		},
+
+		updatePlayerInsertPosition(playerIndex, event) {
+
+			if (!this.shiftPressed)
+				return;
+
+			if (!this.draggingPlayerId)
+				return;
+
+			if (event && event.dataTransfer) {
+				event.dataTransfer.dropEffect = "move";
+			}
+
+			const cardElement =
+				event.currentTarget;
+
+			const rect =
+				cardElement.getBoundingClientRect();
+
+			const cursorY =
+				event.clientY;
+
+			const middleY =
+				rect.top + rect.height / 2;
+
+			if (cursorY < middleY) {
+				this.dragInsertIndex = playerIndex;
+				this.dragInsertPosition = "before";
+			}
+			else {
+				this.dragInsertIndex = playerIndex + 1;
+				this.dragInsertPosition = "after";
+			}
+
+		},
+
+		updatePlayerInsertPositionFromList(event) {
+
+			if (!this.shiftPressed)
+				return;
+
+			if (!this.draggingPlayerId)
+				return;
+
+			if (event && event.dataTransfer) {
+				event.dataTransfer.dropEffect = "move";
+			}
+
+			const cursorY =
+				event.clientY;
+
+			let insertIndex =
+				this.players.length;
+
+			for (let index = 0; index < this.players.length; index++) {
+
+				const player =
+					this.players[index];
+
+				const playerElement =
+					document.querySelector(`[data-player-id="${player.id}"]`);
+
+				if (!playerElement)
+					continue;
+
+				const rect =
+					playerElement.getBoundingClientRect();
+
+				const middleY =
+					rect.top + rect.height / 2;
+
+				if (cursorY < middleY) {
+					insertIndex = index;
+					break;
+				}
+
+			}
+
+			this.dragInsertIndex = insertIndex;
+			this.dragInsertPosition = "between";
+
+		},
+
+		setPlayerInsertIndex(index, event) {
+
+			if (!this.shiftPressed)
+				return;
+
+			if (!this.draggingPlayerId)
+				return;
+
+			if (event && event.dataTransfer) {
+				event.dataTransfer.dropEffect = "move";
+			}
+
+			this.dragInsertIndex = index;
+			this.dragInsertPosition = "between";
+
+		},
+
+		dropPlayerAtInsertIndex() {
+
+			if (!this.shiftPressed)
+				return;
+
+			if (!this.draggingPlayerId)
+				return;
+
+			if (this.dragInsertIndex === null)
+				return;
+
+			const fromIndex =
+				this.players.findIndex(player => {
+					return player.id === this.draggingPlayerId;
+				});
+
+			if (fromIndex === -1)
+				return;
+
+			let toIndex =
+				this.dragInsertIndex;
+
+			if (fromIndex < toIndex) {
+				toIndex--;
+			}
+
+			if (toIndex < 0) {
+				toIndex = 0;
+			}
+
+			if (toIndex > this.players.length - 1) {
+				toIndex = this.players.length - 1;
+			}
+
+			if (fromIndex === toIndex) {
+				this.endPlayerDrag();
+				return;
+			}
+
+			const currentPlayerId =
+				this.currentPlayer ? this.currentPlayer.id : null;
+
+			const movedPlayer =
+				this.players.splice(fromIndex, 1)[0];
+
+			this.players.splice(toIndex, 0, movedPlayer);
+
+			if (currentPlayerId !== null) {
+
+				const newCurrentPlayerIndex =
+					this.players.findIndex(player => {
+						return player.id === currentPlayerId;
+					});
+
+				if (newCurrentPlayerIndex !== -1) {
+					this.currentPlayerIndex = newCurrentPlayerIndex;
+				}
+
+			}
+
+			this.$nextTick(() => {
+				this.updateSipAnimationPositions();
+			});
+
+			this.endPlayerDrag();
+
+		},
+
+		endPlayerDrag() {
+
+			this.draggingPlayerId = null;
+			this.dragInsertIndex = null;
+			this.dragInsertPosition = null;
+
+			setTimeout(() => {
+				this.playerReorderAnimationsEnabled = false;
+			}, 260);
+
+		},
+
+		updateSipAnimationPositions() {
+
+			this.playerSipAnimations.forEach(animation => {
+
+				const playerElement =
+					document.querySelector(`[data-player-id="${animation.playerId}"]`);
+
+				const playersList =
+					document.querySelector(".players-list");
+
+				if (!playerElement || !playersList) {
+					this.$set(animation, "visible", false);
+					return;
+				}
+
+				const playerRect =
+					playerElement.getBoundingClientRect();
+
+				const listRect =
+					playersList.getBoundingClientRect();
+
+				const isVisible =
+					playerRect.bottom >= listRect.top &&
+					playerRect.top <= listRect.bottom;
+
+				this.$set(animation, "visible", isVisible);
+
+				if (!isVisible)
+					return;
+
+				this.$set(animation, "x", playerRect.left - 10);
+				this.$set(animation, "y", playerRect.top + playerRect.height / 2 - 20);
+
+			});
+
+		},
+
+		debugGiveRandomSips() {
+
+			if (this.players.length === 0)
+				return;
+
+			const randomPlayerIndex =
+				Math.floor(Math.random() * this.players.length);
+
+			const player =
+				this.players[randomPlayerIndex];
+
+			const randomSips =
+				Math.floor(Math.random() * 10) + 1;
+
+			this.addSipsToPlayer(
+				player,
+				randomSips
+			);
+
+		},
+
+		hasActiveSipAnimation(playerId) {
+
+			return this.playerSipAnimations.some(animation => {
+				return animation.playerId === playerId;
+			});
+
+		},
+
+		getSipStatAnimationKey(playerId) {
+
+			return this.playerSipStatAnimationKeys[playerId] || 0;
+
+		},
+
+		addAllSipsToPlayer(player) {
+
+			if (this.sipDistributionPopup.remainingSips <= 0)
+				return;
+
+			let entry = this.sipDistributionPopup.distributions.find(entry => {
+				return entry.playerId === player.id;
+			});
+
+			if (!entry) {
+
+				entry = {
+					playerId: player.id,
+					sips: 0
+				};
+
+				this.sipDistributionPopup.distributions.push(entry);
+
+			}
+
+			entry.sips += this.sipDistributionPopup.remainingSips;
+			this.sipDistributionPopup.remainingSips = 0;
+
+		},
+
+		openFreresPredictionPopup(callback) {
+
+			this.freresPredictionPopup.open = true;
+			this.freresPredictionPopup.callback = callback;
+
+		},
+
+		selectFreresPrediction(value) {
+
+			const callback =
+				this.freresPredictionPopup.callback;
+
+			this.freresPredictionPopup.open = false;
+			this.freresPredictionPopup.callback = null;
+
+			if (callback) {
+				callback(value);
+			}
+
+		},
+
+		openShotDistribution(shots, sourcePlayerId) {
+
+			this.shotDistributionPopup = {
+				open: true,
+				shots: shots,
+				playerId: sourcePlayerId
+			};
+
+		},
+
+		giveShotsToPlayer(player) {
+
+			const shots =
+				this.shotDistributionPopup.shots;
+
+			this.addSipsToPlayer(
+				player,
+				shots * 10
+			);
+
+			this.shotDistributionPopup.open = false;
+
+		},
+
+		showPlayerSipGain(playerId, amount) {
+
+			if (!amount || amount <= 0)
+				return;
+
+			this.$nextTick(() => {
+
+				const playerElement =
+					document.querySelector(`[data-player-id="${playerId}"]`);
+
+				let x = window.innerWidth - 285;
+				let y = 120;
+
+				if (playerElement) {
+
+					const rect =
+						playerElement.getBoundingClientRect();
+
+					/*
+						Le point d'ancrage est proche du bord gauche
+						de la fiche joueur.
+						
+						Le texte est ensuite aligné à droite sur ce point,
+						donc +1000 grandit vers la gauche et ne mange pas
+						la fiche joueur.
+					*/
+					x = rect.left - 10;
+					y = rect.top + rect.height / 2 - 20;
+
+				}
+
+				/*
+					On supprime l'ancienne animation du même joueur.
+					Comme ça, si le joueur reprend des gorgées avant la fin,
+					l'ancien +X disparaît et le nouveau repart proprement.
+				*/
+				this.playerSipAnimations =
+					this.playerSipAnimations.filter(animation => {
+						return animation.playerId !== playerId;
+					});
+
+				/*
+					On force aussi le texte des stats à rejouer son animation.
+				*/
+				this.$set(
+					this.playerSipStatAnimationKeys,
+					playerId,
+					Date.now() + Math.random()
+				);
+
+				const animationId =
+					Date.now() + Math.random();
+
+				const rotation =
+					Math.random() * 8 - 4;
+
+				const offset =
+					Math.random() * 8 - 4;
+
+				this.playerSipAnimations.push({
+					id: animationId,
+					playerId: playerId,
+					amount: amount,
+					rotation: rotation,
+					offset: offset,
+					x: x,
+					y: y,
+					visible: true
+				});
+
+				this.$nextTick(() => {
+					this.updateSipAnimationPositions();
+				});
+
+				setTimeout(() => {
+
+					this.playerSipAnimations =
+						this.playerSipAnimations.filter(animation => {
+							return animation.id !== animationId;
+						});
+
+				}, 2450);
+
+			});
+
+		},
+
+		openSipDistribution(totalSips, sourcePlayerId) {
+
+			this.sipDistributionPopup = {
+				open: true,
+				totalSips: totalSips,
+				remainingSips: totalSips,
+				playerId: sourcePlayerId,
+				distributions: []
+			};
+
+		},
+
+		addSipToPlayer(player) {
+
+			if (this.sipDistributionPopup.remainingSips <= 0)
+				return;
+
+			let entry = this.sipDistributionPopup.distributions.find(entry => {
+				return entry.playerId === player.id;
+			});
+
+			if (!entry) {
+
+				entry = {
+					playerId: player.id,
+					sips: 0
+				};
+
+				this.sipDistributionPopup.distributions.push(entry);
+
+			}
+
+			entry.sips++;
+
+			this.sipDistributionPopup.remainingSips--;
+
+		},
+
+		removeSipFromPlayer(player) {
+
+			const entry = this.sipDistributionPopup.distributions.find(entry => {
+				return entry.playerId === player.id;
+			});
+
+			if (!entry || entry.sips <= 0)
+				return;
+
+			entry.sips--;
+
+			this.sipDistributionPopup.remainingSips++;
+
+		},
+
+		getDistributedSips(playerId) {
+
+			const entry = this.sipDistributionPopup.distributions.find(entry => {
+				return entry.playerId === playerId;
+			});
+
+			return entry ? entry.sips : 0;
+
+		},
+
+		validateSipDistribution() {
+
+			this.sipDistributionPopup.distributions.forEach(entry => {
+
+				const player = this.players.find(player => {
+					return player.id === entry.playerId;
+				});
+
+				if (!player)
+					return;
+
+				player.sessionSips =
+					(player.sessionSips || 0) +
+					entry.sips;
+
+				this.showPlayerSipGain(
+					player.id,
+					entry.sips
+				);
+
+			});
+
+			this.closeSipDistribution();
+
+		},
+
+		closeSipDistribution() {
+
+			this.sipDistributionPopup.open = false;
+
+		},
+
+		getBestAceModeForMove(cards, successCallback) {
+
+			if (this.aceMode !== null) {
+				return this.aceMode;
+			}
+
+			const hasAce = cards.some(card => {
+				return card.value === "ace";
+			});
+
+			if (!hasAce) {
+				return null;
+			}
+
+			const lowSuccess = successCallback("low");
+			const highSuccess = successCallback("high");
+
+			if (lowSuccess) {
+				this.aceMode = "low";
+				this.showMoveBonus("As défini", "L'As est maintenant faible pour toute la session.");
+				return "low";
+			}
+
+			if (highSuccess) {
+				this.aceMode = "high";
+				this.showMoveBonus("As défini", "L'As est maintenant fort pour toute la session.");
+				return "high";
+			}
+
+			this.aceMode = "high";
+			this.showMoveBonus("As défini", "L'As est maintenant fort pour toute la session.");
+
+			return "high";
+
+		},
 
 		savePlaymatPreset() {
 
@@ -803,6 +1459,11 @@ var app = new Vue({
 
 			player.sessionSips += amount;
 
+			this.showPlayerSipGain(
+				player.id,
+				amount
+			);
+
 		},
 
 		handleEscapeKey(event) {
@@ -875,7 +1536,28 @@ var app = new Vue({
 			this.cardsPlayedThisTurn = 0;
 
 			if (moveId === "freres") {
-				this.playForcedFreresDeRots(player, previousPlayerIndex);
+
+				this.openChoicePopup({
+					title: "Frères de rots",
+					message: "Choisis une valeur. Si le move passe, tu distribues 1 gorgée par apparition.",
+					type: "buttons",
+
+					options: this.battleValues.map(value => {
+						return {
+							label: value.label,
+							value: value.id
+						};
+					}),
+
+					onConfirm: predictedValue => {
+						this.playForcedFreresDeRots(
+							player,
+							previousPlayerIndex,
+							predictedValue
+						);
+					}
+				});
+
 			}
 
 			if (moveId === "bouffon") {
@@ -884,7 +1566,7 @@ var app = new Vue({
 
 		},
 
-		playForcedFreresDeRots(player, previousPlayerIndex) {
+		playForcedFreresDeRots(player, previousPlayerIndex, predictedValue) {
 
 			if (this.deck.length < 6) {
 				this.showGamePopup("Impossible", "Pas assez de cartes pour Frères de rots.");
@@ -902,12 +1584,26 @@ var app = new Vue({
 					(colors.red || 0) === 3 &&
 					(colors.black || 0) === 3;
 
+				const occurrences = cards.filter(card => {
+					return card.value === predictedValue;
+				}).length;
+
 				this.showMoveResult("Frères de rots", success);
 
 				if (success) {
+
 					this.cardsPlayedThisTurn = 3;
 					this.clearPlayArea();
+
+					if (occurrences > 0) {
+						this.openSipDistribution(
+							occurrences,
+							player.id
+						);
+					}
+
 					return;
+
 				}
 
 				this.turnFailed = true;
@@ -1723,8 +2419,16 @@ var app = new Vue({
 
 		resolveSecondLifeDuel(selectedCard, opponentCard) {
 
-			const selectedPower = this.getCardPower(selectedCard);
-			const opponentPower = this.getCardPower(opponentCard);
+			const aceModeForMove = this.getBestAceModeForMove(
+				[selectedCard, opponentCard],
+				mode => {
+					return this.getCardPower(selectedCard, mode) >
+						this.getCardPower(opponentCard, mode);
+				}
+			);
+
+			const selectedPower = this.getCardPower(selectedCard, aceModeForMove);
+			const opponentPower = this.getCardPower(opponentCard, aceModeForMove);
 
 			const player = this.players.find(player => {
 				return player.id === selectedCard.ownerId;
@@ -3035,8 +3739,13 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 			setTimeout(() => {
 
-				const aceModeForMove =
-					this.resolveAceModeForComparison(referenceCard, card, "higher");
+				const aceModeForMove = this.getBestAceModeForMove(
+					[referenceCard, card],
+					mode => {
+						return this.getCardPower(card, mode) >
+							this.getCardPower(referenceCard, mode);
+					}
+				);
 
 				const success =
 					this.getCardPower(card, aceModeForMove) >
@@ -3061,8 +3770,13 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 			setTimeout(() => {
 
-				const aceModeForMove =
-					this.resolveAceModeForComparison(referenceCard, card, "lower");
+				const aceModeForMove = this.getBestAceModeForMove(
+					[referenceCard, card],
+					mode => {
+						return this.getCardPower(card, mode) <
+							this.getCardPower(referenceCard, mode);
+					}
+				);
 
 				const success =
 					this.getCardPower(card, aceModeForMove) <
@@ -3091,9 +3805,9 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 				this.showMoveResult("=", success);
 
 				if (success) {
-					this.showMoveBonus(
-						"Shot offert",
-						"Le joueur offre un shot au joueur de son choix 🥃"
+					this.openShotDistribution(
+						1,
+						this.currentPlayer.id
 					);
 				}
 
@@ -3138,9 +3852,9 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 				this.showMoveResult("Valeur", success);
 
 				if (success) {
-					this.showMoveBonus(
-						"Shot offert",
-						"Le joueur offre un shot au joueur de son choix 🥃"
+					this.openShotDistribution(
+						1,
+						this.currentPlayer.id
 					);
 				}
 
@@ -3161,10 +3875,19 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 				this.showMoveResult("Carte", success);
 
 				if (success) {
-					this.showMoveBonus(
-						"Shot général",
-						"Le joueur offre un shot à tous les joueurs 🥃"
-					);
+
+					this.players.forEach(player => {
+
+						if (player.id === this.currentPlayer.id)
+							return;
+
+						this.addSipsToPlayer(
+							player,
+							10
+						);
+
+					});
+
 				}
 
 			}, 600);
@@ -3308,6 +4031,27 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 				return;
 			}
 
+			this.openChoicePopup({
+				title: "Frères de rots",
+				message: "Choisis une valeur. Si le move passe, tu distribues 1 gorgée par apparition.",
+				type: "buttons",
+
+				options: this.battleValues.map(value => {
+					return {
+						label: value.label,
+						value: value.id
+					};
+				}),
+
+				onConfirm: predictedValue => {
+					this.resolveFreresDeRots(predictedValue);
+				}
+			});
+
+		},
+
+		resolveFreresDeRots(predictedValue) {
+
 			const cards = this.drawMoveCards(6);
 
 			setTimeout(() => {
@@ -3318,7 +4062,18 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 					(colors.red || 0) === 3 &&
 					(colors.black || 0) === 3;
 
+				const occurrences = cards.filter(card => {
+					return card.value === predictedValue;
+				}).length;
+
 				this.showMoveResult("Frères de rots", success);
+
+				if (success && occurrences > 0) {
+					this.openSipDistribution(
+						occurrences,
+						this.currentPlayer.id
+					);
+				}
 
 			}, 1500);
 
@@ -3335,19 +4090,38 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 			setTimeout(() => {
 
-				const aces = cards.filter(card => {
-					return card.value === "ace";
+				let aceCount = 0;
+
+				cards.forEach(card => {
+
+					if (card.value !== "ace")
+						return;
+
+					if (card.suit === "hearts") {
+						aceCount += 2;
+					}
+					else {
+						aceCount += 1;
+					}
+
 				});
 
-				const aceOfHearts = cards.some(card => {
-					return card.value === "ace" && card.suit === "hearts";
-				});
+				const success = aceCount >= 2;
 
-				const success =
-					aces.length >= 2 ||
-					aceOfHearts;
+				const bonusSips =
+					Math.max(0, aceCount - 2);
 
-				this.showMoveResult("Le sexe / le cul", success);
+				this.showMoveResult(
+					"Le sexe / le cul",
+					success
+				);
+
+				if (success && bonusSips > 0) {
+					this.openSipDistribution(
+						bonusSips,
+						this.currentPlayer.id
+					);
+				}
 
 			}, 2300);
 
@@ -3591,20 +4365,158 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 		addPlayer() {
 
-			const playerName = prompt("Nom du joueur ?");
+			this.startPendingPlayerCreation();
 
-			if (!playerName || playerName.trim() === "")
+		},
+
+		startPendingPlayerCreation() {
+
+			if (this.pendingPlayerCreation)
 				return;
+
+			this.pendingPlayerCreation = true;
+			this.pendingPlayerName = "";
+
+			this.$nextTick(() => {
+
+				if (this.$refs.pendingPlayerInput) {
+					this.$refs.pendingPlayerInput.focus();
+				}
+
+			});
+
+		},
+
+		cancelPendingPlayerCreation() {
+
+			this.pendingPlayerCreation = false;
+			this.pendingPlayerName = "";
+
+		},
+
+		confirmPendingPlayerCreation() {
+
+			const playerName =
+				this.pendingPlayerName.trim();
+
+			if (!playerName) {
+				this.cancelPendingPlayerCreation();
+				return;
+			}
 
 			const newPlayer = {
 				id: Date.now(),
-				name: playerName.trim(),
+				name: playerName,
 				hp: 0,
 				savedOnce: false,
-				sessionSips: 0,
+				sessionSips: 0
 			};
 
 			this.players.push(newPlayer);
+
+			this.pendingPlayerCreation = false;
+			this.pendingPlayerName = "";
+
+			this.$nextTick(() => {
+				this.updateSipAnimationPositions();
+			});
+
+		},
+
+		startEditingPlayer(player) {
+			if (!player)
+				return;
+
+			if (this.editingPlayerId !== null && this.editingPlayerId !== player.id) {
+				this.cancelEditingPlayer();
+			}
+
+			this.editingPlayerId = player.id;
+			this.editingPlayerName = player.name;
+
+			this.$nextTick(() => {
+				requestAnimationFrame(() => {
+					const playerElement = document.querySelector(`[data-player-id="${player.id}"]`);
+
+					if (!playerElement)
+						return;
+
+					const input = playerElement.querySelector(".player-name-input");
+
+					if (!input)
+						return;
+
+					input.focus();
+					input.select();
+				});
+			});
+		},
+
+		confirmEditingPlayer(player) {
+			if (!player)
+				return;
+
+			if (this.editingPlayerId !== player.id)
+				return;
+
+			const newName = this.editingPlayerName.trim();
+
+			if (newName) {
+				player.name = newName;
+			}
+
+			this.editingPlayerId = null;
+			this.editingPlayerName = "";
+		},
+
+		cancelEditingPlayer() {
+
+			this.editingPlayerId = null;
+			this.editingPlayerName = "";
+
+		},
+
+		removePlayer(player) {
+
+			if (!player)
+				return;
+
+			if (this.players.length <= 1) {
+				this.showGamePopup(
+					"Impossible",
+					"Il faut garder au moins un joueur."
+				);
+				return;
+			}
+
+			const removedIndex =
+				this.players.findIndex(existingPlayer => {
+					return existingPlayer.id === player.id;
+				});
+
+			if (removedIndex === -1)
+				return;
+
+			this.players.splice(removedIndex, 1);
+
+			this.playerSipAnimations =
+				this.playerSipAnimations.filter(animation => {
+					return animation.playerId !== player.id;
+				});
+
+			this.$delete(this.playersStats, player.id);
+
+			if (this.currentPlayerIndex >= this.players.length) {
+				this.currentPlayerIndex = 0;
+			}
+
+			if (removedIndex < this.currentPlayerIndex) {
+				this.currentPlayerIndex--;
+			}
+
+			if (this.editingPlayerId === player.id) {
+				this.cancelEditingPlayer();
+			}
 
 		},
 
@@ -3650,6 +4562,11 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 	beforeDestroy() {
 
+		window.removeEventListener(
+			"resize",
+			this.updateSipAnimationPositions
+		);
+
 		window.removeEventListener("keydown", this.handleKeyDown);
 		window.removeEventListener("keyup", this.handleKeyUp);
 		window.removeEventListener(
@@ -3660,6 +4577,11 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 	},
 
 	mounted() {
+
+		window.addEventListener(
+			"resize",
+			this.updateSipAnimationPositions
+		);
 
 		window.addEventListener("keydown", this.handleKeyDown);
 		window.addEventListener("keyup", this.handleKeyUp);
