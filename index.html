@@ -61,7 +61,7 @@
 							</div>
 
 							<div class="card-tracker-hint">
-								Clair = sorti / table · Sombre = encore dans le deck
+								Clair = sorti · Sombre = encore dans le deck
 							</div>
 						</div>
 					</div>
@@ -230,6 +230,44 @@
 
 				</div>
 
+			</div>
+
+			<div v-if="battleMode && battleLoserId && battleRevealFinished" class="battle-finished-panel">
+				<div class="battle-finished-kicker">BATTLE ROYALE</div>
+
+				<h3>Partie terminée</h3>
+
+				<p class="battle-finished-subtitle">
+					<span v-if="battleLoserPlayer">
+						{{ battleLoserPlayer.name }} doit boire {{ sipsText(lockedDiscardSips || discardSips) }}.
+					</span>
+				</p>
+
+				<div class="battle-finished-actions">
+					<button class="battle-finished-button secondary" @click="openBattleStackView">
+						Visionner le jeu
+					</button>
+
+					<button class="battle-finished-button primary" @click="restartGame">
+						Recommencer
+					</button>
+				</div>
+			</div>
+
+			<div v-if="battleRoyaleAvailable" class="battle-royale-cta" @click="openBattleRoyaleSetup">
+				<div class="battle-royale-cta-burst"></div>
+				<div class="battle-royale-cta-flame battle-royale-cta-flame-left"></div>
+				<div class="battle-royale-cta-flame battle-royale-cta-flame-right"></div>
+
+				<div class="battle-royale-cta-content">
+					<div class="battle-royale-kicker">FIN DE PARTIE</div>
+					<h2>BATTLE ROYALE</h2>
+					<p>Que le plus chanceux l'emporte...</p>
+
+					<div class="battle-royale-start-button">
+						START BATTLE
+					</div>
+				</div>
 			</div>
 
 			<div class="flying-cards-layer">
@@ -402,25 +440,7 @@
 
 			<div v-if="!isActionBarHidden" class="action-bar">
 
-				<button v-if="battleRoyaleAvailable" class="battle-royale-button" @click="openBattleRoyaleSetup">
-					BATTLE ROYALE
-				</button>
-
-				<div v-else-if="battleMode && battleLoserId && battleRevealFinished" class="battle-controls">
-					<button @click="openBattleStackView">
-						Visionner les cartes
-					</button>
-
-					<button @click="restartGame">
-						Relancer
-					</button>
-				</div>
-
-				<div v-else-if="battleMode" class="battle-status">
-					Battle Royale en cours...
-				</div>
-
-				<template v-else>
+				<template v-if="!battleMode">
 
 					<button class="debug-button" @click="debugSecondLifeBattle">
 						Debug bataille
@@ -471,38 +491,82 @@
 		</div>
 
 		<div v-if="battleSetupOpen" class="battle-setup-overlay">
-			<div class="battle-setup">
+			<div class="battle-setup battle-setup-modern">
 
-				<h2>BATTLE ROYALE</h2>
+				<button class="choice-popup-close" @click="battleSetupOpen = false">
+					×
+				</button>
 
-				<p>{{ battleCurrentPlayer.name }} choisit sa carte</p>
+				<div class="battle-setup-header">
+					<div class="battle-setup-kicker">BATTLE ROYALE</div>
+					<h2>Choisis ta carte</h2>
+					<p>Chaque joueur choisit une carte unique. Le dernier à voir sortir la sienne perd.</p>
+				</div>
 
-				<div class="battle-selects">
+				<div class="battle-setup-topbar">
+					<div class="battle-setup-player-badge">
+						<span class="battle-setup-player-label">JOUEUR ACTUEL</span>
+						<strong>{{ battleCurrentPlayer.name }}</strong>
+					</div>
 
-					<select v-model="battleSelectedValue">
-						<option v-for="value in battleValues" :key="value.id" :value="value.id"
-							:disabled="isBattleValueFullyTaken(value.id)">
-							{{ value.label }}
-						</option>
-					</select>
+					<div class="battle-setup-step-badge">
+						{{ battleChoiceIndex + 1 }} / {{ players.length }}
+					</div>
+				</div>
 
-					<select v-model="battleSelectedSuit" :class="getBattleSuitColorClass(battleSelectedSuit)">
-						<option v-for="suit in battleSuits" :key="suit.id" :value="suit.id"
-							:disabled="isBattleCardTaken(battleSelectedValue, suit.id)"
-							:class="getBattleSuitColorClass(suit.id)">
-							{{ suit.label }}
-						</option>
-					</select>
+				<div class="battle-setup-preview-row">
 
-					<button class="battle-random-button" @click="randomizeBattleChoice">
-						🎲
-					</button>
+					<div class="battle-card-preview">
+						<img class="battle-card-preview-image" :src="getBattlePreviewCardImage()" alt="" />
+					</div>
+
+					<div class="battle-preview-side">
+						<div class="battle-preview-title">Carte choisie</div>
+						<div class="battle-preview-subtitle">
+							{{ getBattleChoiceLabel({ value: battleSelectedValue, suit: battleSelectedSuit }) }}
+						</div>
+
+						<button class="battle-random-button-modern" @click="randomizeBattleChoice">
+							🎲 Random
+						</button>
+					</div>
 
 				</div>
 
-				<button @click="confirmBattleChoice">
-					Valider
-				</button>
+				<div class="battle-choice-section">
+					<div class="battle-choice-label">Valeur</div>
+
+					<div class="battle-value-grid">
+						<button v-for="value in battleValues" :key="value.id" class="battle-choice-chip" :class="{
+						active: battleSelectedValue === value.id,
+						disabled: isBattleValueFullyTaken(value.id)
+					}" :disabled="isBattleValueFullyTaken(value.id)" @click="battleSelectedValue = value.id">
+							{{ getBattleValueShortLabel(value.id) }}
+						</button>
+					</div>
+				</div>
+
+				<div class="battle-choice-section">
+					<div class="battle-choice-label">Signe</div>
+
+					<div class="battle-suit-grid">
+						<button v-for="suit in battleSuits" :key="suit.id" class="battle-suit-chip" :class="[
+						getBattleSuitColorClass(suit.id),
+						{
+							active: battleSelectedSuit === suit.id,
+							disabled: isBattleCardTaken(battleSelectedValue, suit.id)
+						}
+					]" :disabled="isBattleCardTaken(battleSelectedValue, suit.id)" @click="battleSelectedSuit = suit.id">
+							<span class="battle-suit-symbol">{{ suit.label }}</span>
+						</button>
+					</div>
+				</div>
+
+				<div class="battle-setup-actions">
+					<button class="battle-confirm-button" @click="confirmBattleChoice">
+						Valider cette carte
+					</button>
+				</div>
 
 			</div>
 		</div>
@@ -512,7 +576,7 @@
 
 				<button class="close-discard-view" @click="closeBattleStackView">×</button>
 
-				<h2>Tas Battle Royale</h2>
+				<h2>Cartes Battle Royale</h2>
 
 				<div class="discard-fan" @mousemove="updateHoveredBattleStackCard"
 					@mouseleave="hoveredBattleStackCardIndex = null">

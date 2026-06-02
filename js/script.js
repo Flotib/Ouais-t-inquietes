@@ -291,11 +291,24 @@ var app = new Vue({
 
 	computed: {
 
+		battleLoserPlayer() {
+
+			if (!this.battleLoserId)
+				return null;
+
+			return this.players.find(player => {
+				return player.id === this.battleLoserId;
+			}) || null;
+
+		},
+
 		isActionBarHidden() {
 
 			return (
 				this.damidotMode ||
-				this.secondLifeMode
+				this.secondLifeMode ||
+				this.battleMode ||
+				this.battleSetupOpen
 			);
 
 		},
@@ -619,6 +632,28 @@ var app = new Vue({
 	},
 
 	methods: {
+
+		getBattlePreviewCardImage() {
+
+			return this.getCardTexturePath(
+				this.battleSelectedValue,
+				this.battleSelectedSuit
+			);
+
+		},
+
+		getBattleValueShortLabel(valueId) {
+
+			const labels = {
+				ace: "A",
+				jack: "J",
+				queen: "D",
+				king: "K"
+			};
+
+			return labels[valueId] || valueId;
+
+		},
 
 		applyFinalSipDivider(divider) {
 
