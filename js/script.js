@@ -109,6 +109,9 @@ var app = new Vue({
 
 		flyingCards: [],
 
+		holoMaskCache: {},
+		holoMaskGeneration: {},
+
 		freresPredictionPopup: {
 			open: false,
 			callback: null
@@ -178,7 +181,14 @@ var app = new Vue({
 		turnFailed: false,
 
 		availableCardThemes: [
-			{ id: "classic", label: "Classic" }
+			{
+				id: "classic",
+				label: "Classique"
+			},
+			{
+				id: "pixeldark",
+				label: "Pixel dark"
+			}
 		],
 
 		players: [
@@ -270,6 +280,49 @@ var app = new Vue({
 
 	computed: {
 
+		battleStackShadowStyle() {
+
+			if (!this.battleMode) {
+				return {
+					"--battle-stack-shadow-opacity": 0,
+					"--battle-stack-shadow-width": "0px",
+					"--battle-stack-shadow-height": "0px",
+					"--battle-stack-shadow-blur": "0px",
+					"--battle-stack-shadow-y": "0px"
+				};
+			}
+
+			const cardCount =
+				this.cardsInPlay.length;
+
+			const shadowProgress =
+				Math.min(cardCount / 52, 1);
+
+			const width =
+				160 + shadowProgress * 180;
+
+			const height =
+				70 + shadowProgress * 95;
+
+			const blur =
+				12 + shadowProgress * 34;
+
+			const opacity =
+				0.16 + shadowProgress * 0.42;
+
+			const y =
+				18 + shadowProgress * 26;
+
+			return {
+				"--battle-stack-shadow-opacity": opacity,
+				"--battle-stack-shadow-width": `${width}px`,
+				"--battle-stack-shadow-height": `${height}px`,
+				"--battle-stack-shadow-blur": `${blur}px`,
+				"--battle-stack-shadow-y": `${y}px`
+			};
+
+		},
+
 		distributablePlayers() {
 
 			return this.players.filter(player => {
@@ -358,7 +411,7 @@ var app = new Vue({
 		},
 
 		backCardImage() {
-			return `assets/cards/${this.cardTheme}/back.svg`;
+			return this.getCardBackTexturePath();
 		},
 
 		cardsRemaining() {
@@ -384,7 +437,7 @@ var app = new Vue({
 
 				cards.push({
 					id: `deck-back-${i}`,
-					image: `assets/cards/${this.cardTheme}/back.svg`,
+					image: this.getCardBackTexturePath(),
 					style: {
 						transform: `translate(${i * 1.2}px, ${-i * 1.2}px)`,
 						zIndex: i
@@ -496,6 +549,7 @@ var app = new Vue({
 		},
 
 		cardTheme() {
+			this.refreshAllCardTextures();
 			this.saveSettings();
 		},
 
@@ -514,6 +568,202 @@ var app = new Vue({
 	},
 
 	methods: {
+
+		getHoloMaskKey(card) {
+
+			if (!card)
+				return "";
+
+			return this.getCardDisplayImage(card);
+
+		},
+
+		isHoloMaskReady(card) {
+
+			const key =
+				this.getHoloMaskKey(card);
+
+			return !!this.holoMaskCache[key];
+
+		},
+
+		getHoloMaskStyle(card) {
+
+			const key =
+				this.getHoloMaskKey(card);
+
+			if (!key)
+				return {};
+
+			if (!this.holoMaskCache[key]) {
+				this.generateHoloMask(card);
+			}
+
+			return {
+				"--holo-mask-image": this.holoMaskCache[key]
+					? `url("${this.holoMaskCache[key]}")`
+					: "none"
+			};
+
+		},
+
+		generateHoloMask(card) {
+
+			const imagePath =
+				this.getHoloMaskKey(card);
+
+			if (!imagePath)
+				return;
+
+			if (this.holoMaskCache[imagePath])
+				return;
+
+			if (this.holoMaskGeneration[imagePath])
+				return;
+
+			this.$set(this.holoMaskGeneration, imagePath, true);
+
+			const image =
+				new Image();
+
+			image.onload = () => {
+
+				const width =
+					image.naturalWidth || image.width;
+
+				const height =
+					image.naturalHeight || image.height;
+
+				if (!width || !height) {
+					this.$delete(this.holoMaskGeneration, imagePath);
+					return;
+				}
+
+				const canvas =
+					document.createElement("canvas");
+
+				canvas.width = width;
+				canvas.height = height;
+
+				const context =
+					canvas.getContext("2d");
+
+				context.clearRect(0, 0, width, height);
+				context.drawImage(image, 0, 0, width, height);
+
+				const imageData =
+					context.getImageData(0, 0, width, height);
+
+				const pixels =
+					imageData.data;
+
+				for (let index = 0; index < pixels.length; index += 4) {
+
+					const alpha =
+						pixels[index + 3];
+
+					/*
+						RGB blanc partout où la texture existe.
+						Alpha conservé depuis le PNG/SVG.
+						Donc :
+						- transparent = pas d'holo
+						- opaque = holo visible
+						- semi-transparent = holo partiel
+					*/
+					pixels[index] = 255;
+					pixels[index + 1] = 255;
+					pixels[index + 2] = 255;
+					pixels[index + 3] = alpha;
+
+				}
+
+				context.putImageData(imageData, 0, 0);
+
+				const maskDataUrl =
+					canvas.toDataURL("image/png");
+
+				this.$set(this.holoMaskCache, imagePath, maskDataUrl);
+				this.$delete(this.holoMaskGeneration, imagePath);
+
+				this.$forceUpdate();
+
+			};
+
+			image.onerror = () => {
+
+				console.warn("Impossible de générer le masque holo :", imagePath);
+
+				this.$delete(this.holoMaskGeneration, imagePath);
+
+			};
+
+			image.src = imagePath;
+
+		},
+
+		getCardDisplayImage(card) {
+			if (!card)
+				return "";
+
+			if (card.value && card.suit) {
+				return this.getCardTexturePath(card.value, card.suit);
+			}
+
+			return card.image || "";
+		},
+
+		getFlyingCardDisplayImage(flyingCard) {
+			if (!flyingCard)
+				return "";
+
+			if (flyingCard.value && flyingCard.suit) {
+				return this.getCardTexturePath(flyingCard.value, flyingCard.suit);
+			}
+
+			return flyingCard.frontImage || "";
+		},
+
+		refreshCardTexture(card) {
+			if (!card)
+				return;
+
+			if (!card.value || !card.suit)
+				return;
+
+			card.image = this.getCardTexturePath(card.value, card.suit);
+		},
+
+		refreshAllCardTextures() {
+			this.deck.forEach(card => {
+				this.refreshCardTexture(card);
+			});
+
+			this.cardsInPlay.forEach(card => {
+				this.refreshCardTexture(card);
+			});
+
+			this.discardPile.forEach(card => {
+				this.refreshCardTexture(card);
+			});
+
+			this.flyingCards.forEach(flyingCard => {
+				if (flyingCard.value && flyingCard.suit) {
+					flyingCard.frontImage = this.getCardTexturePath(flyingCard.value, flyingCard.suit);
+				}
+
+				flyingCard.backImage = this.getCardBackTexturePath();
+			});
+
+			this.$forceUpdate();
+		},
+
+		getCardTextureExtension() {
+			if (this.cardTheme === "classic") {
+				return "svg";
+			}
+
+			return "png";
+		},
 
 		getCardTrackerCardId(value, suit) {
 			return `${value}_of_${suit}`;
@@ -3016,6 +3266,8 @@ var app = new Vue({
 			if (matchingChoice) {
 
 				card.battleMatched = true;
+				card.faceUp = true;
+
 				matchingChoice.found = true;
 				matchingChoice.foundOrder = this.battleFoundOrder.length + 1;
 
@@ -3032,8 +3284,8 @@ var app = new Vue({
 				const deckElement = document.querySelector(".deck");
 
 				const targetElement =
-					document.querySelector(".battle-stack-target") ||
-					document.querySelector(`[data-card-key="${card.uniqueKey}"]`);
+					document.querySelector(`[data-card-key="${card.uniqueKey}"]`) ||
+					document.querySelector(".battle-stack-target");
 
 				if (!deckElement || !targetElement) {
 					card.invisible = false;
@@ -3042,14 +3294,16 @@ var app = new Vue({
 				}
 
 				this.animateBattleCard({
+					card: card,
 					backImage: this.backCardImage,
-					frontImage: card.image,
+					frontImage: this.getCardDisplayImage(card),
 					fromElement: deckElement,
 					toElement: targetElement,
 					finalRotation: card.stackRotation,
 					duration: fast ? 130 : 320,
 
 					onComplete: () => {
+						card.faceUp = true;
 						card.invisible = false;
 
 						if (!ignoreLock)
@@ -3064,6 +3318,7 @@ var app = new Vue({
 		},
 
 		animateBattleCard({
+			card = null,
 			backImage,
 			frontImage,
 			fromElement,
@@ -3076,13 +3331,33 @@ var app = new Vue({
 			const fromRect = fromElement.getBoundingClientRect();
 			const toRect = toElement.getBoundingClientRect();
 
-			const cardWidth = 190;
-			const cardHeight = 266;
+			const isRealTargetCard =
+				toElement.classList.contains("card") ||
+				toElement.closest(".card");
+
+			const targetCardElement =
+				isRealTargetCard
+					? toElement.closest(".card") || toElement
+					: null;
+
+			const targetRect =
+				targetCardElement
+					? targetCardElement.getBoundingClientRect()
+					: toRect;
+
+			const cardWidth =
+				targetRect.width || 150;
+
+			const cardHeight =
+				targetRect.height || 210;
 
 			const flyingCard = {
 				id: `battle-flying-${Date.now()}-${Math.random()}`,
 
 				duration: duration,
+
+				value: card ? card.value : null,
+				suit: card ? card.suit : null,
 
 				backImage: backImage,
 				frontImage: frontImage,
@@ -3090,11 +3365,14 @@ var app = new Vue({
 				x: fromRect.left + fromRect.width / 2 - cardWidth / 2,
 				y: fromRect.top + fromRect.height / 2 - cardHeight / 2,
 
-				toX: toRect.left + toRect.width / 2 - cardWidth / 2,
-				toY: toRect.top + toRect.height / 2 - cardHeight / 2,
+				toX: targetRect.left + targetRect.width / 2 - cardWidth / 2,
+				toY: targetRect.top + targetRect.height / 2 - cardHeight / 2,
+
+				width: cardWidth,
+				height: cardHeight,
 
 				rotation: finalRotation,
-				scale: 0.9,
+				scale: 0.95,
 
 				flipped: false,
 				battleFlying: true
@@ -3117,8 +3395,9 @@ var app = new Vue({
 
 			setTimeout(() => {
 
-				if (onComplete)
+				if (onComplete) {
 					onComplete();
+				}
 
 				setTimeout(() => {
 
@@ -3430,13 +3709,58 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 		},
 
+		getCardTextureValue(value) {
+			const valueMap = {
+				ace: "a",
+				jack: "j",
+				queen: "q",
+				king: "k"
+			};
+
+			return valueMap[value] || value;
+		},
+
+		getCardTextureSuit(suit) {
+			const suitMap = {
+				hearts: "h",
+				diamonds: "d",
+				clubs: "c",
+				spades: "s"
+			};
+
+			return suitMap[suit] || suit;
+		},
+
+		getCardTextureName(value, suit) {
+			return `${this.getCardTextureValue(value)}${this.getCardTextureSuit(suit)}`;
+		},
+
+		getCardTexturePath(value, suit) {
+			return `assets/cards/${this.cardTheme}/${this.getCardTextureName(value, suit)}.${this.getCardTextureExtension()}`;
+		},
+
+		getCardBackTexturePath() {
+			return `assets/cards/${this.cardTheme}/back.${this.getCardTextureExtension()}`;
+		},
 		createDeck() {
 
 			const suits = [
-				{ name: "hearts", color: "red" },
-				{ name: "diamonds", color: "red" },
-				{ name: "clubs", color: "black" },
-				{ name: "spades", color: "black" }
+				{
+					name: "hearts",
+					color: "red"
+				},
+				{
+					name: "diamonds",
+					color: "red"
+				},
+				{
+					name: "clubs",
+					color: "black"
+				},
+				{
+					name: "spades",
+					color: "black"
+				}
 			];
 
 			const values = [
@@ -3471,7 +3795,7 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 						color: suit.color,
 
-						image: `assets/cards/${this.cardTheme}/${value}_of_${suit.name}.svg`
+						image: this.getCardTexturePath(value, suit.name)
 
 					});
 

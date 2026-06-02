@@ -14,75 +14,66 @@
 
 <body>
 
-	<div id="app">
+	<div id="app" :class="{ 'pixel-card-theme': cardTheme === 'pixeldark' }">
 
 		<div class="game">
 
 			<div class="left-panel">
 
-	<div class="discard-area">
+				<div class="discard-area">
 
-		<div class="card-tracker">
-			<button class="card-tracker-button">
-				👁
-			</button>
+					<div class="card-tracker">
+						<button class="card-tracker-button">
+							👁
+						</button>
 
-			<div class="card-tracker-panel">
-				<div class="card-tracker-title">
-					Cartes sorties
-					<span>{{ getCardTrackerOutCount() }}/52</span>
-				</div>
+						<div class="card-tracker-panel">
+							<div class="card-tracker-title">
+								Cartes sorties
+								<span>{{ getCardTrackerOutCount() }}/52</span>
+							</div>
 
-				<div class="card-tracker-grid">
+							<div class="card-tracker-grid">
 
-					<div class="card-tracker-corner"></div>
+								<div class="card-tracker-corner"></div>
 
-					<div
-						v-for="suit in cardTrackerSuits"
-						:key="'tracker-suit-' + suit.id"
-						class="card-tracker-suit"
-						:class="suit.color === 'red' ? 'card-tracker-red' : 'card-tracker-black'"
-					>
-						{{ suit.icon }}
+								<div v-for="suit in cardTrackerSuits" :key="'tracker-suit-' + suit.id"
+									class="card-tracker-suit"
+									:class="suit.color === 'red' ? 'card-tracker-red' : 'card-tracker-black'">
+									{{ suit.icon }}
+								</div>
+
+								<template v-for="value in cardTrackerValues">
+
+									<div :key="'tracker-value-' + value.id" class="card-tracker-value">
+										{{ value.label }}
+									</div>
+
+									<div v-for="suit in cardTrackerSuits"
+										:key="'tracker-card-' + value.id + '-' + suit.id" class="card-tracker-cell"
+										:class="getCardTrackerCellClass(value.id, suit.id)"
+										:title="getCardTrackerCellTitle(value, suit)">
+										{{ value.short }}
+									</div>
+
+								</template>
+
+							</div>
+
+							<div class="card-tracker-hint">
+								Clair = sorti / table · Sombre = encore dans le deck
+							</div>
+						</div>
 					</div>
 
-					<template v-for="value in cardTrackerValues">
-
-						<div
-							:key="'tracker-value-' + value.id"
-							class="card-tracker-value"
-						>
-							{{ value.label }}
-						</div>
-
-						<div
-							v-for="suit in cardTrackerSuits"
-							:key="'tracker-card-' + value.id + '-' + suit.id"
-							class="card-tracker-cell"
-							:class="getCardTrackerCellClass(value.id, suit.id)"
-							:title="getCardTrackerCellTitle(value, suit)"
-						>
-							{{ value.short }}
-						</div>
-
-					</template>
-
-				</div>
-
-				<div class="card-tracker-hint">
-					Clair = sorti / table · Sombre = encore dans le deck
-				</div>
-			</div>
-		</div>
-
-		<p>Cimetière</p>
+					<p>Cimetière</p>
 
 					<div class="discard-pile" @click.stop="openDiscardView">
 
 						<div class="discard-animation-target"></div>
 
-						<img v-for="discardCard in visibleDiscardStack" :key="discardCard.stackKey"
-							class="stacked-card discard-card-front" :src="discardCard.image"
+						<img v-for="discardCard in visibleDiscardStack" :key="discardCard.stackKey + '-' + cardTheme"
+							class="stacked-card discard-card-front" :src="getCardDisplayImage(discardCard)"
 							:style="discardCard.style" />
 
 						<span v-if="discardPile.length === 0" class="empty-pile-text">
@@ -167,7 +158,8 @@
 					Celle-là !
 				</div>
 
-				<div class="cards-container" :style="overlapCardStyle">
+				<div class="cards-container" :class="{ 'battle-stack-shadow-active': battleMode }"
+					:style="[overlapCardStyle, battleStackShadowStyle]">
 
 					<div class="card" v-for="(card, index) in cardsInPlay" :key="card.uniqueKey"
 						:data-card-key="card.uniqueKey" :style="getTableCardStyle(card, index)" :class="{
@@ -180,7 +172,12 @@
 						<div class="table-card-inner" :class="{ flipped: card.faceUp }">
 							<img class="table-card-face table-card-back" :src="backCardImage" />
 
-							<img class="table-card-face table-card-front" :src="card.image" />
+							<img class="table-card-face table-card-front" :src="getCardDisplayImage(card)" />
+
+							<div v-if="card.battleMatched"
+								class="table-card-face table-card-front table-card-holo-overlay holo-mask"
+								:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
+							</div>
 						</div>
 					</div>
 
@@ -195,7 +192,7 @@
 					<div class="flying-card-rotator" :class="{ flipped: flyingCard.flipped }">
 						<img class="flying-card-face flying-card-back" :src="flyingCard.backImage" />
 
-						<img class="flying-card-face flying-card-front" :src="flyingCard.frontImage" />
+						<img class="flying-card-face flying-card-front" :src="getFlyingCardDisplayImage(flyingCard)" />
 					</div>
 				</div>
 
@@ -240,8 +237,8 @@
 								<span>×</span>
 							</button>
 
-							<div v-if="shiftPressed" class="player-drag-handle"
-								draggable="true" @dragstart.stop="startPlayerDrag(player, $event)">
+							<div v-if="shiftPressed" class="player-drag-handle" draggable="true"
+								@dragstart.stop="startPlayerDrag(player, $event)">
 								<span></span>
 								<span></span>
 								<span></span>
@@ -412,8 +409,14 @@
 					@mouseleave="hoveredDiscardCardIndex = null">
 					<div v-for="(card, index) in discardPile" :key="card.uniqueKey + '-fan'"
 						class="discard-fan-card-wrapper" :style="getDiscardFanCardStyle(index)">
-						<img class="discard-fan-card" :class="{ 'battle-fan-card-holo': card && card.battleMatched }"
-							:src="card.image" />
+						<div class="discard-fan-card-frame">
+							<img class="discard-fan-card" :src="getCardDisplayImage(card)" />
+
+							<div v-if="card && card.battleMatched" class="holo-mask"
+								:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
+
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -468,8 +471,13 @@
 					@mouseleave="hoveredBattleStackCardIndex = null">
 					<div v-for="(card, index) in cardsInPlay" :key="card.uniqueKey + '-battle-fan'"
 						class="discard-fan-card-wrapper" :style="getBattleStackFanCardStyle(index)">
-						<img class="discard-fan-card" :class="{ 'battle-fan-card-holo': card && card.battleMatched }"
-							:src="card.image" />
+						<div class="discard-fan-card-frame">
+							<img class="discard-fan-card" :src="getCardDisplayImage(card)" />
+
+							<div v-if="card && card.battleMatched" class="holo-mask"
+								:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
+							</div>
+						</div>
 					</div>
 				</div>
 

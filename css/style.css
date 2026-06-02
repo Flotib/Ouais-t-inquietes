@@ -17,10 +17,6 @@
 	will-change: transform;
 }
 
-.cards-container {
-	contain: layout paint;
-}
-
 * {
 	margin: 0;
 	padding: 0;
@@ -983,7 +979,8 @@ body {
 	width: 100%;
 	height: 100%;
 
-	position: static;
+	/*position: static;*/
+	position: relative;
 	z-index: auto;
 
 	display: grid;
@@ -992,6 +989,8 @@ body {
 	align-content: center;
 
 	row-gap: 18px;
+
+	contain: layout paint;
 
 	overflow: visible;
 }
@@ -1144,140 +1143,245 @@ body {
 .card.battle-card {
 	width: 190px;
 	height: 266px;
-}
-
-.battle-matched-card {
 	position: relative;
-	overflow: hidden;
-
-	filter:
-		drop-shadow(0 8px 8px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 16px rgba(168, 85, 247, 0.9)) drop-shadow(0 0 26px rgba(34, 211, 238, 0.55));
+	z-index: 2;
 }
 
-.battle-matched-card .table-card-inner::before {
-	content: "";
+/* ========================================= */
+/* HOLO BATTLE ROYALE - version bleu/violet  */
+/* ========================================= */
 
+.discard-fan-card-frame {
 	position: absolute;
-	inset: 0;
+
+	left: 10px;
+	bottom: 40px;
+
+	width: 200px;
+	height: 280px;
+
+	border-radius: 12px;
+
+	overflow: hidden;
+	clip-path: inset(0 round 12px);
+	contain: paint;
+	isolation: isolate;
+
+	pointer-events: none;
+}
+
+.discard-fan-card-frame .discard-fan-card {
+	position: absolute;
+
+	left: 0;
+	top: 0;
+
+	width: 100%;
+	height: 100%;
+
+	object-fit: contain;
+
+	border-radius: 12px;
+
+	filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.65));
+
+	pointer-events: none;
+	user-select: none;
+
+	z-index: 1;
+}
+
+.table-card-holo-overlay {
+	pointer-events: none;
+
+	background: transparent;
+
+	z-index: 5;
 
 	border-radius: 10px;
 
+	backface-visibility: hidden;
+	transform: rotateY(180deg);
+}
+
+.holo-mask {
+	position: absolute;
+
+	left: 0;
+	top: 0;
+
+	width: 100%;
+	height: 100%;
+
+	border-radius: inherit;
+
+	overflow: hidden;
+	contain: paint;
+	isolation: isolate;
+
+	pointer-events: none;
+
+	z-index: 5;
+
+	background: transparent;
+
+	opacity: 0;
+
+	-webkit-mask-image: var(--holo-mask-image);
+	mask-image: var(--holo-mask-image);
+
+	-webkit-mask-size: contain;
+	mask-size: contain;
+
+	-webkit-mask-position: center;
+	mask-position: center;
+
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+
+	-webkit-mask-mode: alpha;
+	mask-mode: alpha;
+}
+
+.holo-mask.holo-mask-ready {
+	opacity: 1;
+}
+
+.holo-mask::before,
+.holo-mask::after {
+	content: "";
+
+	position: absolute;
+
+	left: 0;
+	top: 0;
+
+	width: 100%;
+	height: 100%;
+
+	pointer-events: none;
+}
+
+.holo-mask::before {
 	background:
 		linear-gradient(115deg,
-			rgba(255, 0, 150, 0.18),
-			rgba(0, 255, 255, 0.20),
-			rgba(255, 255, 0, 0.16),
-			rgba(140, 80, 255, 0.24),
-			rgba(255, 255, 255, 0.12)),
+			rgba(255, 255, 255, 0.00) 0%,
+			rgba(96, 165, 250, 0.18) 12%,
+			rgba(139, 92, 246, 0.34) 24%,
+			rgba(255, 255, 255, 0.12) 34%,
+			rgba(34, 211, 238, 0.22) 46%,
+			rgba(168, 85, 247, 0.38) 58%,
+			rgba(255, 255, 255, 0.10) 68%,
+			rgba(59, 130, 246, 0.26) 82%,
+			rgba(255, 255, 255, 0.00) 100%),
 		repeating-linear-gradient(45deg,
-			rgba(255, 255, 255, 0.12) 0px,
-			rgba(255, 255, 255, 0.12) 2px,
-			rgba(0, 0, 0, 0.06) 3px,
-			rgba(0, 0, 0, 0.06) 5px);
+			rgba(255, 255, 255, 0.08) 0px,
+			rgba(255, 255, 255, 0.08) 1px,
+			rgba(90, 80, 255, 0.07) 2px,
+			rgba(90, 80, 255, 0.07) 4px);
 
-	background-size: 240% 240%, 12px 12px;
+	background-size:
+		260% 260%,
+		18px 18px;
 
-	mix-blend-mode: multiply;
+	background-position:
+		0% 35%,
+		0 0;
 
-	opacity: 0.55;
+	mix-blend-mode: soft-light;
+	opacity: 0.95;
 
-	pointer-events: none;
-
-	animation: holo-texture-move 2.2s linear infinite;
-
-	z-index: 10;
+	animation: holoVeilSmooth 11s ease-in-out infinite alternate;
 }
 
-.battle-matched-card .table-card-inner::after {
-	content: "";
+.holo-mask::after {
+	background:
+		radial-gradient(circle at 22% 18%,
+			rgba(255, 255, 255, 0.40) 0%,
+			rgba(255, 255, 255, 0.00) 18%),
+		radial-gradient(circle at 76% 32%,
+			rgba(96, 165, 250, 0.32) 0%,
+			rgba(96, 165, 250, 0.00) 28%),
+		radial-gradient(circle at 52% 82%,
+			rgba(168, 85, 247, 0.36) 0%,
+			rgba(168, 85, 247, 0.00) 30%),
+		linear-gradient(128deg,
+			rgba(255, 255, 255, 0.00) 8%,
+			rgba(191, 219, 254, 0.22) 28%,
+			rgba(139, 92, 246, 0.32) 42%,
+			rgba(255, 255, 255, 0.16) 52%,
+			rgba(255, 255, 255, 0.00) 72%);
 
-	position: absolute;
+	background-size: 220% 220%;
+	background-position: 14% 24%;
+
+	mix-blend-mode: screen;
+	opacity: 0.78;
+
+	filter: saturate(1.18);
+
+	animation: holoSpecSmooth 9.5s ease-in-out infinite alternate;
+}
+
+@keyframes holoVeilSmooth {
+	0% {
+		background-position:
+			0% 35%,
+			0 0;
+
+		opacity: 0.70;
+	}
+
+	50% {
+		background-position:
+			58% 50%,
+			9px 9px;
+
+		opacity: 1;
+	}
+
+	100% {
+		background-position:
+			100% 65%,
+			18px 18px;
+
+		opacity: 0.78;
+	}
+}
+
+@keyframes holoSpecSmooth {
+	0% {
+		background-position: 12% 24%;
+		opacity: 0.52;
+	}
+
+	50% {
+		background-position: 56% 44%;
+		opacity: 0.90;
+	}
+
+	100% {
+		background-position: 94% 68%;
+		opacity: 0.62;
+	}
+}
+
+.table-card-holo-overlay.holo-mask {
 	inset: 0;
+
+	width: 100%;
+	height: 100%;
 
 	border-radius: 10px;
 
-	background:
-		linear-gradient(70deg,
-			transparent 0%,
-			rgba(255, 255, 255, 0.75) 45%,
-			rgba(255, 255, 255, 0.25) 52%,
-			transparent 62%);
+	transform: rotateY(180deg);
+	backface-visibility: hidden;
 
-	background-size: 260% 260%;
-
-	opacity: 0.7;
-
-	pointer-events: none;
-
-	animation: holo-light-sweep 1.7s ease-in-out infinite;
-
-	z-index: 11;
+	z-index: 6;
 }
 
-@keyframes holo-texture-move {
-	from {
-		background-position: 0% 50%, 0 0;
-	}
+/* ---------- Carte holo sur le plateau ---------- */
 
-	to {
-		background-position: 240% 50%, 24px 24px;
-	}
-}
-
-@keyframes holo-light-sweep {
-	from {
-		background-position: -160% 50%;
-		opacity: 0.25;
-	}
-
-	45% {
-		opacity: 0.85;
-	}
-
-	to {
-		background-position: 160% 50%;
-		opacity: 0.35;
-	}
-}
-
-@keyframes holo-shine {
-	from {
-		background-position: 0% 50%;
-	}
-
-	to {
-		background-position: 220% 50%;
-	}
-}
-
-@keyframes holo-pulse {
-	from {
-		opacity: 0.35;
-	}
-
-	to {
-		opacity: 0.75;
-	}
-}
-
-.battle-fan-card-holo {
-	filter:
-		drop-shadow(0 10px 12px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 18px rgba(168, 85, 247, 0.95)) drop-shadow(0 0 26px rgba(34, 211, 238, 0.65));
-
-	animation: battle-fan-holo-pulse 1.2s ease-in-out infinite alternate;
-}
-
-@keyframes battle-fan-holo-pulse {
-	from {
-		filter:
-			drop-shadow(0 10px 12px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 10px rgba(168, 85, 247, 0.65)) drop-shadow(0 0 18px rgba(34, 211, 238, 0.35));
-	}
-
-	to {
-		filter:
-			drop-shadow(0 10px 12px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 24px rgba(168, 85, 247, 1)) drop-shadow(0 0 34px rgba(34, 211, 238, 0.8));
-	}
-}
 
 .battle-found-counter {
 	position: absolute;
@@ -2060,7 +2164,7 @@ body {
 
 	left: 0;
 	top: -1px;
-	
+
 	width: 12px;
 	height: calc(100% + 2px);
 
@@ -2078,11 +2182,9 @@ body {
 	border-radius: 7px 0 0 7px;
 
 	background:
-		linear-gradient(
-			180deg,
+		linear-gradient(180deg,
 			rgba(167, 139, 250, 0.98),
-			rgba(124, 58, 237, 0.98)
-		);
+			rgba(124, 58, 237, 0.98));
 
 	border: 1px solid rgba(196, 181, 253, 0.55);
 	border-right: none;
@@ -2699,6 +2801,20 @@ body {
 }
 
 .discard-fan-card {
+	width: 100%;
+	height: 100%;
+
+	object-fit: contain;
+
+	border-radius: 12px;
+
+	filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.65));
+
+	pointer-events: none;
+	user-select: none;
+}
+
+.discard-fan-card-frame {
 	position: absolute;
 
 	left: 10px;
@@ -2707,11 +2823,27 @@ body {
 	width: 200px;
 	height: 280px;
 
+	border-radius: 12px;
+
+	overflow: hidden;
+	clip-path: inset(0 round 12px);
+	isolation: isolate;
+
+	pointer-events: none;
+}
+
+.discard-fan-card-frame .discard-fan-card {
+	position: absolute;
+
+	left: 0;
+	top: 0;
+
+	width: 100%;
+	height: 100%;
+
 	object-fit: contain;
 
 	border-radius: 12px;
-
-	filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.65));
 
 	pointer-events: none;
 	user-select: none;
@@ -3466,11 +3598,9 @@ input[type="reset"] {
 
 .card-tracker-out.card-tracker-red {
 	background:
-		linear-gradient(
-			135deg,
+		linear-gradient(135deg,
 			rgba(239, 68, 68, 0.34),
-			rgba(127, 29, 29, 0.72)
-		);
+			rgba(127, 29, 29, 0.72));
 
 	border-color: rgba(248, 113, 113, 0.55);
 
@@ -3480,11 +3610,9 @@ input[type="reset"] {
 
 .card-tracker-out.card-tracker-black {
 	background:
-		linear-gradient(
-			135deg,
+		linear-gradient(135deg,
 			rgba(229, 231, 235, 0.22),
-			rgba(55, 65, 81, 0.72)
-		);
+			rgba(55, 65, 81, 0.72));
 
 	border-color: rgba(229, 231, 235, 0.32);
 
@@ -3509,4 +3637,61 @@ input[type="reset"] {
 
 	font-size: 10px;
 	text-align: center;
+}
+
+.pixel-card-theme .card img,
+.pixel-card-theme .stacked-card,
+.pixel-card-theme .flying-card-face,
+.pixel-card-theme .table-card-face,
+.pixel-card-theme .discard-fan-card,
+.pixel-card-theme .card-tracker-mini-card {
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+}
+
+.pixel-card-theme img[src*="/pixeldark/"],
+.pixel-card-theme .table-card-face,
+.pixel-card-theme .flying-card-face,
+.pixel-card-theme .stacked-card,
+.pixel-card-theme .discard-card-front,
+.pixel-card-theme .discard-fan-card,
+.pixel-card-theme .deck-card-back,
+.pixel-card-theme .card-tracker-mini-card {
+	image-rendering: pixelated !important;
+	image-rendering: crisp-edges !important;
+}
+
+.card.battle-card,
+.card.battle-card .table-card-inner,
+.card.battle-card .table-card-face {
+	box-shadow: none !important;
+	filter: none !important;
+}
+
+.cards-container.battle-stack-shadow-active::before {
+	content: "";
+
+	position: absolute;
+
+	left: 50%;
+	top: 50%;
+
+	width: var(--battle-stack-shadow-width);
+	height: var(--battle-stack-shadow-height);
+
+	transform:
+		translate(-50%, calc(-50% + var(--battle-stack-shadow-y))) rotate(-4deg);
+
+	background:
+		radial-gradient(ellipse,
+			rgba(0, 0, 0, var(--battle-stack-shadow-opacity)) 0%,
+			rgba(0, 0, 0, calc(var(--battle-stack-shadow-opacity) * 0.72)) 32%,
+			rgba(0, 0, 0, calc(var(--battle-stack-shadow-opacity) * 0.36)) 58%,
+			rgba(0, 0, 0, 0) 78%);
+
+	filter: blur(var(--battle-stack-shadow-blur));
+
+	pointer-events: none;
+
+	z-index: 0;
 }
