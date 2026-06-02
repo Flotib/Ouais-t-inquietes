@@ -130,8 +130,10 @@
 
 					<div class="deck" @click="handleDeckLeftClick" @contextmenu.prevent="drawCardFaceDown">
 
-						<img v-for="cardBack in visibleDeckStack" :key="cardBack.id" class="stacked-card deck-card-back"
-							:src="cardBack.image" :style="cardBack.style" />
+						<img v-for="(cardBack, index) in visibleDeckStack" :key="cardBack.id"
+							class="stacked-card deck-card-back"
+							:class="{ 'deck-top-card': index === visibleDeckStack.length - 1 }" :src="cardBack.image"
+							:style="cardBack.style" />
 
 					</div>
 

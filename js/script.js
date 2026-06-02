@@ -183,11 +183,15 @@ var app = new Vue({
 		availableCardThemes: [
 			{
 				id: "classic",
-				label: "Classique"
+				label: "Classique",
 			},
 			{
 				id: "pixeldark",
-				label: "Pixel dark"
+				label: "Pixel dark",
+			},
+			{
+				id: "bicycleblizzard",
+				label: "Bicycle Blizzard",
 			}
 		],
 
@@ -290,6 +294,23 @@ var app = new Vue({
 	},
 
 	computed: {
+
+		currentCardThemeConfig() {
+
+			return this.availableCardThemes.find(theme => {
+				return theme.id === this.cardTheme;
+			}) || null;
+
+		},
+
+		currentCardThemeNeedsMask() {
+
+			if (!this.currentCardThemeConfig)
+				return false;
+
+			return this.currentCardThemeConfig.readytoplay === false;
+
+		},
 
 		predictionActions() {
 
@@ -1551,12 +1572,20 @@ var app = new Vue({
 			this.$forceUpdate();
 		},
 
-		getCardTextureExtension() {
-			if (this.cardTheme === "classic") {
-				return "svg";
-			}
+		getCardTextureExtension(themeId = this.cardTheme) {
 
-			return "png";
+			const jpgThemes = [
+				"bicycleblizzard"
+			];
+
+			if (jpgThemes.includes(themeId))
+				return "jpg";
+
+			if (themeId === "pixeldark")
+				return "png";
+
+			return "svg";
+
 		},
 
 		getCardTrackerCardId(value, suit) {
