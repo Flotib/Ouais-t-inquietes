@@ -453,7 +453,7 @@ body {
 
 	transform: translate(-50%, -50%) rotate(-2deg);
 
-	z-index: 7000;
+	z-index: 10000;
 
 	font-size: 76px;
 	font-weight: 900;
@@ -979,7 +979,6 @@ body {
 	width: 100%;
 	height: 100%;
 
-	/*position: static;*/
 	position: relative;
 	z-index: auto;
 
@@ -987,10 +986,12 @@ body {
 
 	justify-content: center;
 	align-content: center;
+	place-content: center;
+
+	justify-items: center;
+	align-items: center;
 
 	row-gap: 18px;
-
-	contain: layout paint;
 
 	overflow: visible;
 }
@@ -2461,12 +2462,12 @@ body {
 	z-index: -1;
 }
 
-.battle-stack-target,
+/*.battle-stack-target,
 .second-life-title,
 .second-life-choice-pop,
 .second-life-result-pop {
 	z-index: 2;
-}
+}*/
 
 .next-turn-button:hover {
 	background-color: #444;
@@ -3788,4 +3789,218 @@ input[type="reset"] {
 .card-theme-back[src*="/pixeldark/"] {
 	image-rendering: pixelated;
 	image-rendering: crisp-edges;
+}
+
+.damidot-ui {
+	position: absolute;
+
+	left: 50%;
+	top: 24px;
+	transform: translateX(-50%);
+
+	width: 706px;
+	height: 500px;
+
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 70px;
+
+	pointer-events: none;
+	z-index: 2200;
+}
+
+.damidot-ui.damidot-placement-phase,
+.damidot-ui.damidot-choose-phase,
+.damidot-ui.damidot-ready-phase {
+	z-index: 9000;
+}
+
+.damidot-ui.damidot-reveal-phase {
+	z-index: 2200;
+	pointer-events: none;
+}
+
+.damidot-group {
+	position: relative;
+
+	width: 318px;
+	height: 500px;
+
+	pointer-events: none;
+}
+
+.damidot-slot-grid {
+	position: absolute;
+	left: 0;
+	top: 0;
+
+	width: 318px;
+	height: 438px;
+
+	display: grid;
+	grid-template-columns: repeat(2, 150px);
+	grid-template-rows: repeat(2, 210px);
+	gap: 18px;
+
+	pointer-events: none;
+}
+
+.damidot-slot {
+	width: 150px;
+	height: 210px;
+
+	border-radius: 14px;
+	border: 2px dashed rgba(255, 255, 255, 0.20);
+
+	background:
+		linear-gradient(
+			180deg,
+			rgba(255, 255, 255, 0.04),
+			rgba(255, 255, 255, 0.02)
+		);
+
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+		0 8px 18px rgba(0, 0, 0, 0.18);
+
+	opacity: 0.85;
+
+	pointer-events: auto;
+	cursor: default;
+
+	transition:
+		transform 0.14s ease,
+		border-color 0.14s ease,
+		box-shadow 0.14s ease,
+		opacity 0.14s ease;
+}
+
+.damidot-slot.clickable {
+	cursor: pointer;
+}
+
+.damidot-slot.clickable:hover {
+	transform: translateY(-2px);
+	border-color: rgba(180, 140, 255, 0.65);
+	box-shadow:
+		0 0 0 1px rgba(180, 140, 255, 0.18),
+		0 10px 24px rgba(0, 0, 0, 0.26),
+		0 0 18px rgba(160, 100, 255, 0.16);
+}
+
+.damidot-slot.filled {
+	opacity: 0.12;
+	border-style: solid;
+}
+
+.damidot-side-overlay {
+	position: absolute;
+
+	left: 50%;
+	top: 219px;
+
+	width: 340px;
+	height: 470px;
+
+	transform: translate(-50%, -50%);
+
+	z-index: 40;
+
+	border-radius: 26px;
+	border: 2px solid rgba(255, 255, 255, 0.16);
+
+	background: rgba(255, 255, 255, 0.055);
+	backdrop-filter: blur(2px);
+
+	pointer-events: auto;
+	cursor: pointer;
+
+	transition:
+		background 0.14s ease,
+		border-color 0.14s ease,
+		box-shadow 0.14s ease,
+		transform 0.14s ease;
+}
+
+.damidot-side-overlay:hover {
+	background: rgba(170, 120, 255, 0.1);
+	border-color: rgba(190, 160, 255, 0.48);
+	box-shadow:
+		0 0 0 1px rgba(190, 160, 255, 0.18),
+		0 0 30px rgba(145, 92, 255, 0.2);
+
+	transform: translate(-50%, -50%) scale(1.015);
+}
+
+.damidot-counter {
+	position: absolute;
+
+	left: 50%;
+	top: 454px;
+	transform: translateX(-50%);
+
+	min-width: 120px;
+
+	padding: 8px 16px;
+
+	border-radius: 999px;
+
+	background: rgba(0, 0, 0, 0.35);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+
+	text-align: center;
+	font-weight: bold;
+	font-size: 20px;
+	letter-spacing: 0.02em;
+
+	box-shadow:
+		0 8px 18px rgba(0, 0, 0, 0.22),
+		inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.damidot-finish-button {
+	position: absolute;
+
+	left: 50%;
+	top: 454px;
+	transform: translateX(-50%);
+
+	padding: 10px 24px;
+
+	border-radius: 999px;
+
+	background: rgba(90, 42, 180, 0.92);
+	color: white;
+
+	border: 1px solid rgba(210, 190, 255, 0.35);
+
+	font-weight: bold;
+	font-size: 18px;
+
+	pointer-events: auto;
+	cursor: pointer;
+
+	z-index: 40;
+
+	box-shadow:
+		0 10px 24px rgba(0, 0, 0, 0.35),
+		0 0 18px rgba(150, 100, 255, 0.22);
+}
+
+.damidot-finish-button:hover {
+	background: rgba(120, 70, 220, 0.95);
+}
+
+.damidot-score-or {
+	display: inline-block;
+
+	margin: 0 5px;
+
+	font-size: 12px;
+	font-weight: 700;
+
+	opacity: 0.72;
+
+	transform: translateY(-1px);
 }

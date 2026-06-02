@@ -158,6 +158,53 @@
 					Celle-là !
 				</div>
 
+				<div v-if="damidotMode" class="damidot-ui" :class="{
+		'damidot-placement-phase': damidotPhase === 'placement',
+		'damidot-choose-phase': damidotPhase === 'choose-side',
+		'damidot-reveal-phase': damidotPhase === 'reveal',
+		'damidot-ready-phase': damidotPhase === 'ready-to-resolve',
+		'damidot-resolved-phase': damidotPhase === 'resolved'
+	}">
+
+					<div class="damidot-group damidot-group-left">
+
+						<div class="damidot-slot-grid">
+							<button v-for="slotIndex in 4" :key="'left-' + slotIndex" class="damidot-slot" :class="{
+						filled: isDamidotSlotOccupied('left', slotIndex - 1),
+						clickable: damidotPhase === 'placement' && !isDamidotSlotOccupied('left', slotIndex - 1)
+						}" @click="placeDamidotCardInSlot('left', slotIndex - 1)"></button>
+						</div>
+
+						<button v-if="damidotPhase === 'choose-side'" class="damidot-side-overlay"
+							@click="chooseDamidotSide('left')"></button>
+
+						<div class="damidot-counter" v-html="getDamidotGroupTotalLabel('left')"></div>
+
+					</div>
+
+					<div class="damidot-group damidot-group-right">
+
+						<div class="damidot-slot-grid">
+							<button v-for="slotIndex in 4" :key="'right-' + slotIndex" class="damidot-slot" :class="{
+						filled: isDamidotSlotOccupied('right', slotIndex - 1),
+						clickable: damidotPhase === 'placement' && !isDamidotSlotOccupied('right', slotIndex - 1)
+						}" @click="placeDamidotCardInSlot('right', slotIndex - 1)"></button>
+						</div>
+
+						<button v-if="damidotPhase === 'choose-side'" class="damidot-side-overlay"
+							@click="chooseDamidotSide('right')"></button>
+
+						<div class="damidot-counter" v-html="getDamidotGroupTotalLabel('right')"></div>
+
+					</div>
+
+					<button v-if="damidotPhase === 'ready-to-resolve'" class="damidot-finish-button"
+						@click="finishDamidot">
+						Terminer
+					</button>
+
+				</div>
+
 				<div class="cards-container" :class="{ 'battle-stack-shadow-active': battleMode }"
 					:style="[overlapCardStyle, battleStackShadowStyle]">
 
@@ -353,7 +400,7 @@
 
 			</div>
 
-			<div class="action-bar">
+			<div v-if="!isActionBarHidden" class="action-bar">
 
 				<button v-if="battleRoyaleAvailable" class="battle-royale-button" @click="openBattleRoyaleSetup">
 					BATTLE ROYALE

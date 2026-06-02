@@ -224,7 +224,7 @@ var app = new Vue({
 			{ id: "color", label: "Couleur" },
 			{ id: "suit", label: "Signe" },
 			{ id: "value", label: "Valeur" },
-			{ id: "card", label: "Carte" },
+			{ id: "card", label: "Divination" },
 
 			{ id: "purple", label: "Purple" },
 			{ id: "fion", label: "Fion" },
@@ -233,7 +233,12 @@ var app = new Vue({
 			{ id: "jack", label: "Jack" },
 			{ id: "pinte", label: "Pinte" },
 			{ id: "freres", label: "Frères de rots" },
-			{ id: "sexe", label: "Le sexe / le cul" }
+			{ id: "sexe", label: "Le Cul, Le Sexe, L'Amour" },
+
+			{ id: "combat", label: "Combat" },
+			{ id: "perfect", label: "Perfect" },
+			{ id: "cachecache", label: "Cache-cache" },
+			{ id: "damidot", label: "Les gros nibards à Valérie Damidot" },
 		],
 
 		battleSetupOpen: false,
@@ -269,16 +274,31 @@ var app = new Vue({
 		],
 
 		sipMultiplier: 1,
+		sipDivider: 1,
 		aceMode: null,
+
+		damidotMode: false,
+		damidotPhase: null, // "placement" | "choose-side" | "reveal" | "resolved"
+		damidotChosenSide: null,
 
 		secondLifeMode: false,
 		secondLifeCards: [],
 		secondLifeSelectedCard: null,
 		secondLifeResolving: false,
+		secondLifeContext: "second-life",
 
 	},
 
 	computed: {
+
+		isActionBarHidden() {
+
+			return (
+				this.damidotMode ||
+				this.secondLifeMode
+			);
+
+		},
 
 		battleStackShadowStyle() {
 
@@ -377,11 +397,24 @@ var app = new Vue({
 				return this.lockedDiscardSips;
 			}
 
+			const multiplier =
+				this.sipMultiplier || 1;
+
+			const divider =
+				this.sipDivider || 1;
+
+			let baseSips = 0;
+
 			if (this.totalPlayedCardsForSips === 1) {
-				return 1 * this.sipMultiplier;
+				baseSips = 1 * multiplier;
+			}
+			else {
+				baseSips = Math.floor(
+					(this.totalPlayedCardsForSips / 2) * multiplier
+				);
 			}
 
-			return Math.floor(this.totalPlayedCardsForSips / 2) * this.sipMultiplier;
+			return Math.floor(baseSips / divider);
 
 		},
 
@@ -485,20 +518,23 @@ var app = new Vue({
 			const cardWidth = 150;
 			const cardHeight = 210;
 
-			const availableWidth = this.playAreaWidth - 40;
+			const availableWidth =
+				Math.max(this.playAreaWidth - 40, cardWidth);
 
-			let columnGap = 15;
+			let columnGap = 0;
 
 			if (this.maxCardsPerRow > 1) {
-				columnGap = (availableWidth - cardWidth) / (this.maxCardsPerRow - 1);
+				columnGap =
+					(availableWidth - cardWidth) / (this.maxCardsPerRow - 1);
 			}
 
 			columnGap = Math.min(165, columnGap);
 			columnGap = Math.max(35, columnGap);
 
 			return {
-				gridTemplateColumns: `repeat(${this.maxCardsPerRow}, ${columnGap}px)`,
-				gridTemplateRows: `repeat(${this.usedRowsOnTable}, ${cardHeight}px)`
+				gridTemplateColumns: `repeat(${this.maxCardsPerRow}, 0px)`,
+				gridTemplateRows: `repeat(${this.usedRowsOnTable}, ${cardHeight}px)`,
+				columnGap: `${columnGap}px`
 			};
 
 		},
@@ -513,7 +549,22 @@ var app = new Vue({
 
 		maxCardsPerRow() {
 
-			return Math.ceil(this.maxCardsOnTable / this.maxRowsOnTable);
+			const theoreticalMax =
+				Math.ceil(this.maxCardsOnTable / this.maxRowsOnTable);
+
+			const cardWidth = 150;
+			const minColumnGap = 35;
+
+			const availableWidth =
+				Math.max(this.playAreaWidth - 40, cardWidth);
+
+			const maxThatCanFit =
+				Math.floor((availableWidth - cardWidth) / minColumnGap) + 1;
+
+			return Math.max(
+				1,
+				Math.min(theoreticalMax, maxThatCanFit)
+			);
 
 		},
 
@@ -568,6 +619,559 @@ var app = new Vue({
 	},
 
 	methods: {
+
+		applyFinalSipDivider(divider) {
+
+			this.sipDivider =
+				(this.sipDivider || 1) * divider;
+
+		},
+
+		resetDamidotState() {
+
+			this.damidotMode = false;
+			this.damidotPhase = null;
+			this.damidotChosenSide = null;
+
+			this.cardsInPlay.forEach(card => {
+
+				if (!card || !card.damidotCard)
+					return;
+
+				this.$set(card, "damidotCard", false);
+				this.$set(card, "damidotSide", null);
+				this.$set(card, "damidotSlotIndex", null);
+
+			});
+
+		},
+
+		isDamidotSlotOccupied(side, slotIndex) {
+
+			return this.cardsInPlay.some(card => {
+				return card &&
+					card.damidotCard &&
+					card.damidotSide === side &&
+					card.damidotSlotIndex === slotIndex;
+			});
+
+		},
+
+		getDamidotScoreValue(card, aceMode = null) {
+
+			if (!card)
+				return 0;
+
+			if (card.value === "ace") {
+
+				if (aceMode === "low")
+					return 1;
+
+				if (aceMode === "high")
+					return 11;
+
+				return 11;
+
+			}
+
+			const values = {
+				"2": 2,
+				"3": 3,
+				"4": 4,
+				"5": 5,
+				"6": 6,
+				"7": 7,
+				"8": 8,
+				"9": 9,
+				"10": 10,
+				jack: 11,
+				queen: 12,
+				king: 13
+			};
+
+			return values[card.value] || 0;
+
+		},
+
+		getDamidotGroupTotals(side) {
+
+			const revealedCards = this.getDamidotCardsBySide(side).filter(card => {
+				return card.faceUp;
+			});
+
+			let fixedTotal = 0;
+			let aceCount = 0;
+
+			revealedCards.forEach(card => {
+
+				if (card.value === "ace") {
+					aceCount++;
+					return;
+				}
+
+				fixedTotal += this.getDamidotScoreValue(card);
+
+			});
+
+			const lowTotal = fixedTotal + (aceCount * 1);
+			const highTotal = fixedTotal + (aceCount * 11);
+
+			return {
+				low: lowTotal,
+				high: highTotal,
+				aceCount: aceCount
+			};
+
+		},
+
+		getDamidotGroupTotalLabel(side) {
+
+			const totals = this.getDamidotGroupTotals(side);
+
+			if (totals.aceCount === 0)
+				return `${totals.low}`;
+
+			if (this.aceMode === "low")
+				return `${totals.low}`;
+
+			if (this.aceMode === "high")
+				return `${totals.high}`;
+
+			return `${totals.low} <span class="damidot-score-or">ou</span> ${totals.high}`;
+
+		},
+
+		getDamidotResolvedScore(side, aceMode = null) {
+
+			const cards = this.getDamidotCardsBySide(side);
+
+			return cards.reduce((sum, card) => {
+				return sum + this.getDamidotScoreValue(card, aceMode);
+			}, 0);
+
+		},
+
+		getDamidotSideHasFourDifferentSuits(side) {
+
+			const suits = new Set(
+				this.getDamidotCardsBySide(side).map(card => {
+					return card.suit;
+				})
+			);
+
+			return suits.size === 4;
+
+		},
+
+		checkDamidotCompletion() {
+
+			if (!this.damidotMode || this.damidotPhase !== "reveal")
+				return;
+
+			const damidotCards =
+				this.getDamidotCards();
+
+			if (damidotCards.length !== 8)
+				return;
+
+			const allRevealed =
+				damidotCards.every(card => {
+					return card.faceUp;
+				});
+
+			if (!allRevealed)
+				return;
+
+			this.damidotPhase = "ready-to-resolve";
+
+		},
+
+		finishDamidot() {
+
+			if (!this.damidotMode)
+				return;
+
+			if (this.damidotPhase !== "ready-to-resolve")
+				return;
+
+			const damidotCards =
+				this.getDamidotCards();
+
+			const damidotKeys =
+				damidotCards.map(card => {
+					return card.uniqueKey;
+				});
+
+			this.resolveDamidot();
+
+			damidotCards.forEach(card => {
+
+				if (!card)
+					return;
+
+				this.$set(card, "faceUp", true);
+				this.$set(card, "invisible", false);
+
+				this.$set(card, "damidotCard", false);
+				this.$set(card, "damidotSide", null);
+				this.$set(card, "damidotSlotIndex", null);
+
+			});
+
+			this.cardsInPlay =
+				this.cardsInPlay.filter(card => {
+
+					if (!card)
+						return false;
+
+					if (damidotKeys.includes(card.uniqueKey)) {
+
+						this.discardPile.push(card);
+
+						return false;
+
+					}
+
+					return true;
+
+				});
+
+			this.damidotMode = false;
+			this.damidotPhase = null;
+			this.damidotChosenSide = null;
+
+		},
+		getSuitOptions() {
+
+			return [
+				{ label: "♥", value: "hearts", className: "choice-red" },
+				{ label: "♦", value: "diamonds", className: "choice-red" },
+				{ label: "♣", value: "clubs", className: "choice-black" },
+				{ label: "♠", value: "spades", className: "choice-black" }
+			];
+
+		},
+
+		getValueOptions() {
+
+			return this.battleValues.map(value => {
+				return {
+					label: value.label,
+					value: value.id
+				};
+			});
+
+		},
+
+		getSuitLabel(suit) {
+
+			const labels = {
+				hearts: "♥",
+				diamonds: "♦",
+				clubs: "♣",
+				spades: "♠"
+			};
+
+			return labels[suit] || suit;
+
+		},
+
+		applySipMultiplierBonus(multiplier) {
+
+			if (this.sipMultiplier <= 1) {
+				this.sipMultiplier = multiplier;
+				return;
+			}
+
+			this.sipMultiplier += multiplier;
+
+		},
+
+		applySipMultiplierDivider(divider) {
+
+			this.sipMultiplier =
+				Math.max(
+					0.5,
+					this.sipMultiplier / divider
+				);
+
+		},
+
+		giveShotsToEveryoneExceptCurrent(amount = 1) {
+
+			if (!this.currentPlayer)
+				return;
+
+			this.players.forEach(player => {
+
+				if (player.id === this.currentPlayer.id)
+					return;
+
+				this.addSipsToPlayer(
+					player,
+					amount * 10
+				);
+
+			});
+
+		},
+
+		compareCardPrediction(card, referenceCard, prediction) {
+
+			if (!card || !referenceCard)
+				return false;
+
+			if (prediction === "equal") {
+				return card.value === referenceCard.value;
+			}
+
+			const aceModeForMove =
+				this.getBestAceModeForMove(
+					[referenceCard, card],
+					mode => {
+
+						if (prediction === "higher") {
+							return this.getCardPower(card, mode) >
+								this.getCardPower(referenceCard, mode);
+						}
+
+						if (prediction === "lower") {
+							return this.getCardPower(card, mode) <
+								this.getCardPower(referenceCard, mode);
+						}
+
+						return false;
+
+					}
+				);
+
+			if (prediction === "higher") {
+				return this.getCardPower(card, aceModeForMove) >
+					this.getCardPower(referenceCard, aceModeForMove);
+			}
+
+			if (prediction === "lower") {
+				return this.getCardPower(card, aceModeForMove) <
+					this.getCardPower(referenceCard, aceModeForMove);
+			}
+
+			return false;
+
+		},
+
+		getCardsPowerSum(cards) {
+
+			return cards.reduce((sum, card) => {
+				return sum + this.getCardPower(card);
+			}, 0);
+
+		},
+
+		getDamidotCards() {
+
+			return this.cardsInPlay.filter(card => {
+				return card && card.damidotCard;
+			});
+
+		},
+
+		getDamidotCardsBySide(side) {
+
+			return this.getDamidotCards().filter(card => {
+				return card.damidotSide === side;
+			});
+
+		},
+
+		killPlayerBecauseNotEnoughCards(player, message) {
+
+			if (!player)
+				return;
+
+			player.hp = 0;
+			player.savedOnce = true;
+
+			this.showPlayerDeathPopup(player, {
+				title: "Perte du joueur",
+				message: message || `${player.name} meurt car il n'y a plus assez de cartes.`
+			});
+
+		},
+
+		askPerfectMove() {
+
+			if (this.cardsPlayedThisTurn > 0) {
+				this.showGamePopup(
+					"Perfect",
+					"Perfect ne peut être joué qu'en début de tour."
+				);
+				return;
+			}
+
+			if (this.deck.length < 3) {
+				this.showGamePopup(
+					"Impossible",
+					"Pas assez de cartes pour Perfect."
+				);
+				return;
+			}
+
+			this.openChoicePopup({
+				title: "Perfect",
+				message: "Optionnel : prédis le signe qui ne sortira pas.",
+				type: "buttons",
+				options: [
+					{ label: "Pas de prédiction", value: null },
+					...this.getSuitOptions()
+				],
+
+				onConfirm: predictedMissingSuit => {
+					this.playPerfect(predictedMissingSuit);
+				}
+			});
+
+		},
+
+		playPerfect(predictedMissingSuit = null) {
+
+			const cards =
+				this.drawMoveCards(3);
+
+			setTimeout(() => {
+
+				const suits =
+					cards.map(card => {
+						return card.suit;
+					});
+
+				const uniqueSuits =
+					new Set(suits);
+
+				const success =
+					cards.length === 3 &&
+					uniqueSuits.size === 3;
+
+				const allSuits =
+					["hearts", "diamonds", "clubs", "spades"];
+
+				const missingSuit =
+					allSuits.find(suit => {
+						return !uniqueSuits.has(suit);
+					});
+
+				const predictionSuccess =
+					success &&
+					predictedMissingSuit &&
+					predictedMissingSuit === missingSuit;
+
+				this.showMoveResult(
+					"Perfect",
+					success
+				);
+
+				if (predictionSuccess) {
+
+					this.applySipMultiplierBonus(2);
+
+					this.showMoveBonus(
+						"Perfect bonus",
+						`Le ${this.getSuitLabel(missingSuit)} n'est pas sorti : multiplicateur de gorgées +x2.`
+					);
+
+				}
+
+				setTimeout(() => {
+					this.nextTurn();
+				}, 900);
+
+			}, 1100);
+
+		},
+
+		askCacheCacheMove() {
+
+			if (this.deck.length < 3) {
+				this.showGamePopup(
+					"Impossible",
+					"Pas assez de cartes pour Cache-cache."
+				);
+				return;
+			}
+
+			const firstCard =
+				this.drawCardFaceUp();
+
+			setTimeout(() => {
+				this.askCacheCachePrediction(firstCard, 1);
+			}, 650);
+
+		},
+
+		askCacheCachePrediction(referenceCard, step) {
+
+			this.openChoicePopup({
+				title: "Cache-cache",
+				message: `Carte ${step + 1} : elle sera +, -, ou = ?`,
+				type: "buttons",
+				options: [
+					{ label: "+", value: "higher" },
+					{ label: "-", value: "lower" },
+					{ label: "=", value: "equal" }
+				],
+
+				onConfirm: prediction => {
+					this.resolveCacheCacheStep(
+						referenceCard,
+						prediction,
+						step
+					);
+				}
+			});
+
+		},
+
+		resolveCacheCacheStep(referenceCard, prediction, step) {
+
+			const card =
+				this.drawCardFaceDown();
+
+			setTimeout(() => {
+
+				this.$set(card, "faceUp", true);
+
+				const success =
+					this.compareCardPrediction(
+						card,
+						referenceCard,
+						prediction
+					);
+
+				if (!success) {
+					this.showMoveResult(
+						"Cache-cache",
+						false
+					);
+					return;
+				}
+
+				if (step >= 2) {
+					this.showMoveResult(
+						"Cache-cache",
+						true
+					);
+					return;
+				}
+
+				setTimeout(() => {
+					this.askCacheCachePrediction(
+						card,
+						step + 1
+					);
+				}, 650);
+
+			}, 650);
+
+		},
 
 		getCardThemeExtension(themeId) {
 
@@ -2567,6 +3171,9 @@ var app = new Vue({
 			this.cardsPlayedThisTurn = 0;
 			this.currentPlayerIndex = 0;
 
+			this.resetDamidotState();
+			this.sipDivider = 1;
+
 			this.createDeck();
 			this.shuffleDeck();
 
@@ -2648,15 +3255,35 @@ var app = new Vue({
 
 		},
 
-		startSecondLifeChallenge(player) {
+		startSecondLifeChallenge(player, context = "second-life") {
+
+			if (!player)
+				return;
 
 			if (this.deck.length < 2) {
-				this.showGamePopup(
-					"Impossible",
-					"Pas assez de cartes pour tenter la seconde vie."
-				);
+
+				if (context === "second-life") {
+
+					this.killPlayerBecauseNotEnoughCards(
+						player,
+						`${player.name} meurt car il n'y a pas assez de cartes pour tenter une seconde chance.`
+					);
+
+				}
+				else {
+
+					this.showGamePopup(
+						"Combat",
+						"Pas assez de cartes pour lancer le Combat."
+					);
+
+				}
+
 				return;
+
 			}
+
+			this.secondLifeContext = context;
 
 			this.secondLifeMode = true;
 			this.secondLifeCards = [];
@@ -2668,11 +3295,19 @@ var app = new Vue({
 
 			setTimeout(() => {
 
-				this.drawSecondLifeCard("left", player.id);
+				this.drawSecondLifeCard(
+					"left",
+					player.id,
+					context
+				);
 
 				setTimeout(() => {
 
-					this.drawSecondLifeCard("right", player.id);
+					this.drawSecondLifeCard(
+						"right",
+						player.id,
+						context
+					);
 
 				}, 650);
 
@@ -2680,7 +3315,7 @@ var app = new Vue({
 
 		},
 
-		drawSecondLifeCard(side, playerId) {
+		drawSecondLifeCard(side, playerId, context = "second-life") {
 
 			if (this.deck.length === 0)
 				return null;
@@ -2692,6 +3327,7 @@ var app = new Vue({
 			card.ownerId = playerId;
 			card.secondLifeCard = true;
 			card.secondLifeSide = side;
+			this.$set(card, "secondLifeContext", context);
 			card.secondLifeStackIndex = this.secondLifeCards.filter(existingCard => {
 				return existingCard.secondLifeSide === side;
 			}).length;
@@ -2701,7 +3337,17 @@ var app = new Vue({
 			this.secondLifeCards.push(card);
 
 			this.animateLayoutChange(() => {
+
 				this.cardsInPlay.push(card);
+
+				this.cardsPlayedThisTurn++;
+
+				if (!this.playersStats[card.ownerId]) {
+					this.$set(this.playersStats, card.ownerId, 0);
+				}
+
+				this.playersStats[card.ownerId]++;
+
 			});
 
 			this.$nextTick(() => {
@@ -2799,6 +3445,51 @@ var app = new Vue({
 				return player.id === selectedCard.ownerId;
 			});
 
+			if (selectedCard.secondLifeContext === "combat") {
+
+				if (selectedPower > opponentPower) {
+
+					this.showSecondLifeResultPop("win");
+
+					setTimeout(() => {
+
+						this.showMoveResult(
+							"Combat",
+							true
+						);
+
+						this.finishCombatChallenge();
+
+					}, 900);
+
+					return;
+
+				}
+
+				if (selectedPower < opponentPower) {
+
+					this.showSecondLifeResultPop("lose");
+
+					setTimeout(() => {
+
+						this.showMoveResult(
+							"Combat",
+							false
+						);
+
+						this.endSecondLifeChallenge(true);
+
+					}, 900);
+
+					return;
+
+				}
+
+				this.launchSecondLifeBattle(selectedCard.ownerId);
+				return;
+
+			}
+
 			if (selectedPower > opponentPower) {
 
 				this.showSecondLifeResultPop("win");
@@ -2870,6 +3561,261 @@ var app = new Vue({
 
 		},
 
+		playDamidot() {
+
+			if (this.deck.length < 8) {
+				this.showGamePopup(
+					"Impossible",
+					"Pas assez de cartes pour Les gros nibards à Valérie Damidot."
+				);
+				return;
+			}
+
+			this.resetDamidotState();
+
+			this.damidotMode = true;
+			this.damidotPhase = "placement";
+
+		},
+
+		placeDamidotCardInSlot(side, slotIndex) {
+
+			if (!this.damidotMode || this.damidotPhase !== "placement")
+				return;
+
+			if (this.isDamidotSlotOccupied(side, slotIndex))
+				return;
+
+			const damidotCards = this.getDamidotCards();
+
+			if (damidotCards.length >= 8)
+				return;
+
+			const card = this.drawCard({
+				faceUp: false,
+				flip: false
+			});
+
+			if (!card)
+				return;
+
+			this.$set(card, "damidotCard", true);
+			this.$set(card, "damidotSide", side);
+			this.$set(card, "damidotSlotIndex", slotIndex);
+
+			const placedCount = this.getDamidotCards().length;
+
+			if (placedCount >= 8) {
+				this.damidotPhase = "choose-side";
+			}
+
+		},
+
+		chooseDamidotSide(side) {
+
+			if (!this.damidotMode || this.damidotPhase !== "choose-side")
+				return;
+
+			this.damidotChosenSide = side;
+			this.damidotPhase = "reveal";
+
+		},
+
+		handleDamidotCardClick(card) {
+
+			if (!card || !card.damidotCard || !this.damidotMode)
+				return;
+
+			if (this.damidotPhase !== "reveal")
+				return;
+
+			if (card.faceUp)
+				return;
+
+			card.faceUp = true;
+
+			this.$nextTick(() => {
+				this.checkDamidotCompletion();
+			});
+
+		},
+
+		resolveDamidot() {
+
+			if (!this.damidotChosenSide)
+				return;
+
+			const chosenSide =
+				this.damidotChosenSide;
+
+			const otherSide =
+				chosenSide === "left"
+					? "right"
+					: "left";
+
+			const damidotCards =
+				this.getDamidotCards();
+
+			const hasAce =
+				damidotCards.some(card => {
+					return card.value === "ace";
+				});
+
+			let chosenScore = 0;
+			let otherScore = 0;
+
+			if (this.aceMode === "low") {
+
+				chosenScore =
+					this.getDamidotResolvedScore(chosenSide, "low");
+
+				otherScore =
+					this.getDamidotResolvedScore(otherSide, "low");
+
+			}
+			else if (this.aceMode === "high") {
+
+				chosenScore =
+					this.getDamidotResolvedScore(chosenSide, "high");
+
+				otherScore =
+					this.getDamidotResolvedScore(otherSide, "high");
+
+			}
+			else if (hasAce) {
+
+				const chosenLow =
+					this.getDamidotResolvedScore(chosenSide, "low");
+
+				const otherLow =
+					this.getDamidotResolvedScore(otherSide, "low");
+
+				const chosenHigh =
+					this.getDamidotResolvedScore(chosenSide, "high");
+
+				const otherHigh =
+					this.getDamidotResolvedScore(otherSide, "high");
+
+				const lowSuccess =
+					chosenLow > otherLow;
+
+				const highSuccess =
+					chosenHigh > otherHigh;
+
+				if (lowSuccess) {
+
+					this.aceMode = "low";
+
+					chosenScore = chosenLow;
+					otherScore = otherLow;
+
+					this.showMoveBonus(
+						"As défini",
+						"L'As est maintenant faible pour toute la session."
+					);
+
+				}
+				else if (highSuccess) {
+
+					this.aceMode = "high";
+
+					chosenScore = chosenHigh;
+					otherScore = otherHigh;
+
+					this.showMoveBonus(
+						"As défini",
+						"L'As est maintenant fort pour toute la session."
+					);
+
+				}
+				else {
+
+					const lowDifference =
+						chosenLow - otherLow;
+
+					const highDifference =
+						chosenHigh - otherHigh;
+
+					if (lowDifference >= highDifference) {
+
+						this.aceMode = "low";
+
+						chosenScore = chosenLow;
+						otherScore = otherLow;
+
+						this.showMoveBonus(
+							"As défini",
+							"L'As est maintenant faible pour toute la session."
+						);
+
+					}
+					else {
+
+						this.aceMode = "high";
+
+						chosenScore = chosenHigh;
+						otherScore = otherHigh;
+
+						this.showMoveBonus(
+							"As défini",
+							"L'As est maintenant fort pour toute la session."
+						);
+
+					}
+
+				}
+
+			}
+			else {
+
+				chosenScore =
+					this.getDamidotResolvedScore(chosenSide, null);
+
+				otherScore =
+					this.getDamidotResolvedScore(otherSide, null);
+
+			}
+
+			const success =
+				chosenScore > otherScore;
+
+			const hasFourDifferentSuits =
+				this.getDamidotSideHasFourDifferentSuits(chosenSide);
+
+			this.showMoveResult(
+				"Les gros nibards à Valérie Damidot",
+				success
+			);
+
+			if (hasFourDifferentSuits) {
+
+				if (success) {
+
+					this.applySipMultiplierBonus(3);
+
+					this.showMoveBonus(
+						"Damidot bonus",
+						"Le groupe choisi a les 4 signes différents : multiplicateur de gorgées +x3."
+					);
+
+				}
+				else {
+
+					this.applyFinalSipDivider(2);
+
+					this.showMoveBonus(
+						"Damidot malus",
+						"Le groupe choisi a les 4 signes différents : nombre final de gorgées divisé par 2."
+					);
+
+				}
+
+			}
+
+			this.damidotPhase = "resolved";
+
+		},
+
 		goToNextPlayerAfterSecondLife() {
 
 			this.clearPlayArea();
@@ -2886,25 +3832,40 @@ var app = new Vue({
 
 		launchSecondLifeBattle(playerId) {
 
+			const player = this.players.find(player => {
+				return player.id === playerId;
+			});
+
 			if (this.deck.length < 2) {
-				this.showGamePopup(
-					"Dommage...",
-					"Égalité mais pas assez de cartes pour continuer la bataille."
+
+				this.killPlayerBecauseNotEnoughCards(
+					player,
+					player
+						? `${player.name} meurt : égalité, mais il n'y a pas assez de cartes pour continuer la bataille.`
+						: "Le joueur meurt : égalité, mais il n'y a pas assez de cartes pour continuer la bataille."
 				);
-				this.endSecondLifeChallenge();
+
 				return;
+
 			}
 
 			this.secondLifeSelectedCard = null;
 			this.secondLifeResolving = false;
 
+			const context =
+				this.secondLifeCards.some(card => {
+					return card.secondLifeContext === "combat";
+				})
+					? "combat"
+					: "second-life";
+
 			setTimeout(() => {
 
-				this.drawSecondLifeCard("left", playerId);
+				this.drawSecondLifeCard("left", playerId, context);
 
 				setTimeout(() => {
 
-					this.drawSecondLifeCard("right", playerId);
+					this.drawSecondLifeCard("right", playerId, context);
 
 				}, 650);
 
@@ -2912,14 +3873,63 @@ var app = new Vue({
 
 		},
 
-		endSecondLifeChallenge() {
+		endSecondLifeChallenge(keepCards = false) {
 
 			const secondLifeKeys = this.secondLifeCards.map(card => {
 				return card.uniqueKey;
 			});
 
-			this.cardsInPlay = this.cardsInPlay.filter(card => {
-				return !card.secondLifeCard && !secondLifeKeys.includes(card.uniqueKey);
+			if (keepCards) {
+
+				this.secondLifeCards.forEach(card => {
+
+					if (!card)
+						return;
+
+					this.$set(card, "faceUp", true);
+					this.$set(card, "invisible", false);
+
+					this.$set(card, "secondLifeCard", false);
+					this.$set(card, "secondLifeSide", null);
+					this.$set(card, "secondLifeStackIndex", null);
+					this.$set(card, "secondLifeContext", null);
+
+				});
+
+			}
+			else {
+
+				this.cardsInPlay = this.cardsInPlay.filter(card => {
+					return !card.secondLifeCard && !secondLifeKeys.includes(card.uniqueKey);
+				});
+
+			}
+
+			this.secondLifeMode = false;
+			this.secondLifeCards = [];
+			this.secondLifeSelectedCard = null;
+			this.secondLifeResolving = false;
+			this.secondLifeChoicePop = null;
+			this.secondLifeResultPop = null;
+			this.secondLifeContext = "second-life";
+
+		},
+
+		finishCombatChallenge() {
+
+			this.secondLifeCards.forEach(card => {
+
+				if (!card)
+					return;
+
+				this.$set(card, "faceUp", true);
+				this.$set(card, "invisible", false);
+
+				this.$set(card, "secondLifeCard", false);
+				this.$set(card, "secondLifeSide", null);
+				this.$set(card, "secondLifeStackIndex", null);
+				this.$set(card, "secondLifeContext", null);
+
 			});
 
 			this.secondLifeMode = false;
@@ -2928,8 +3938,22 @@ var app = new Vue({
 			this.secondLifeResolving = false;
 			this.secondLifeChoicePop = null;
 			this.secondLifeResultPop = null;
+			this.secondLifeContext = "second-life";
 
 		},
+
+		playCombat() {
+
+			if (!this.currentPlayer)
+				return;
+
+			this.startSecondLifeChallenge(
+				this.currentPlayer,
+				"combat"
+			);
+
+		},
+
 		getCardPower(card, preferredAceMode = null) {
 
 			if (card.value === "ace") {
@@ -3447,6 +4471,11 @@ var app = new Vue({
 				return;
 			}
 
+			if (card.damidotCard) {
+				this.handleDamidotCardClick(card);
+				return;
+			}
+
 			this.toggleCardFace(card);
 
 		},
@@ -3664,6 +4693,57 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 		},
 
 		getTableCardStyle(card, index) {
+
+			if (card.damidotCard) {
+
+				const slotIndex =
+					card.damidotSlotIndex || 0;
+
+				const column =
+					slotIndex % 2;
+
+				const row =
+					Math.floor(slotIndex / 2);
+
+				const groupCenterX =
+					card.damidotSide === "left"
+						? -194
+						: 194;
+
+				const columnOffset =
+					column === 0
+						? -84
+						: 84;
+
+				const damidotTop =
+					24;
+
+				const slotWidth =
+					150;
+
+				const slotHeight =
+					210;
+
+				const slotGap =
+					18;
+
+				const slotCenterY =
+					damidotTop +
+					(slotHeight / 2) +
+					row * (slotHeight + slotGap);
+
+				const yOffset =
+					slotCenterY - (this.playAreaHeight / 2);
+
+				return {
+					position: "absolute",
+					left: "50%",
+					top: "50%",
+					transform: `translate(calc(-50% + ${groupCenterX + columnOffset}px), calc(-50% + ${yOffset}px))`,
+					zIndex: 2600 + index
+				};
+
+			}
 
 			if (this.battleMode) {
 
@@ -4080,6 +5160,10 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 					this.askSpecificCardMove();
 					break;
 
+				case "combat":
+					this.playCombat();
+					break;
+
 				case "purple":
 					this.playPurple();
 					break;
@@ -4088,8 +5172,16 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 					this.playFion();
 					break;
 
+				case "perfect":
+					this.askPerfectMove();
+					break;
+
 				case "ouais":
 					this.playOuaisTinquietes();
+					break;
+
+				case "cachecache":
+					this.askCacheCacheMove();
 					break;
 
 				case "jumelles":
@@ -4110,6 +5202,10 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 				case "sexe":
 					this.playSexe();
+					break;
+
+				case "damidot":
+					this.playDamidot();
 					break;
 
 			}
@@ -4797,6 +5893,8 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 			}
 
 			this.clearPlayArea();
+			this.resetDamidotState();
+			this.sipDivider = 1;
 			this.turnFailed = false;
 			this.cardsPlayedThisTurn = 0;
 
