@@ -51,8 +51,7 @@
 
 									<div v-for="suit in cardTrackerSuits"
 										:key="'tracker-card-' + value.id + '-' + suit.id" class="card-tracker-cell"
-										:class="getCardTrackerCellClass(value.id, suit.id)"
-										:title="getCardTrackerCellTitle(value, suit)">
+										:class="getCardTrackerCellClass(value.id, suit.id)">
 										{{ value.short }}
 									</div>
 
@@ -466,7 +465,7 @@
 						<div class="action-moves-grid">
 							<button v-for="action in moveActions" :key="action.id"
 								class="action-button move-action-button" :class="'action-id-' + action.id"
-								:disabled="isActionDisabled(action)" :title="action.label"
+								:disabled="isActionDisabled(action)"
 								@click="executeAction(action.id)">
 								<span class="move-action-emoji">
 									{{ getMoveEmoji(action.id) }}
