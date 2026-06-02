@@ -58,7 +58,7 @@ var app = new Vue({
 
 		cardTheme: "classic",
 
-		selectedPlaymatPresetId: "default",
+		selectedPlaymatPresetId: "purple",
 
 		discardPile: [],
 
@@ -129,17 +129,26 @@ var app = new Vue({
 		},
 
 		playmatColors: {
-			main: "#163126",
-			mid: "#0c1714",
-			dark: "#070b0a"
+			main: "#3b1740",
+			mid: "#140a24",
+			dark: "#04041b"
 		},
 
 		playmatPresetName: "",
 
 		playmatPresets: [
 			{
+				id: "purple",
+				name: "Purple",
+				colors: {
+					main: "#3b1740",
+					mid: "#140a24",
+					dark: "#04041b"
+				}
+			},
+			{
 				id: "default",
-				name: "Défaut",
+				name: "Vert",
 				colors: {
 					main: "#163126",
 					mid: "#0c1714",
@@ -184,15 +193,24 @@ var app = new Vue({
 			{
 				id: "classic",
 				label: "Classique",
+				readytoplay: true,
+				extension: "svg",
+				showInSettings: true
 			},
 			{
 				id: "pixeldark",
 				label: "Pixel dark",
+				readytoplay: true,
+				extension: "png",
+				showInSettings: true
 			},
 			{
 				id: "bicycleblizzard",
 				label: "Bicycle Blizzard",
-			}
+				readytoplay: false,
+				extension: "jpg",
+				showInSettings: false
+			},
 		],
 
 		players: [
@@ -703,6 +721,43 @@ var app = new Vue({
 	},
 
 	methods: {
+
+		isBasePlaymatPreset(presetId) {
+
+			return [
+				"default",
+				"purple"
+			].includes(presetId);
+
+		},
+
+		deleteSelectedPlaymatPreset() {
+
+			if (this.isBasePlaymatPreset(this.selectedPlaymatPresetId)) {
+				this.showGamePopup(
+					"Impossible",
+					"Tu ne peux pas supprimer les presets de base."
+				);
+				return;
+			}
+
+			const presetIndex =
+				this.playmatPresets.findIndex(preset => {
+					return preset.id === this.selectedPlaymatPresetId;
+				});
+
+			if (presetIndex === -1)
+				return;
+
+			this.playmatPresets.splice(presetIndex, 1);
+
+			this.selectedPlaymatPresetId = "purple";
+
+			this.applySelectedPlaymatPreset();
+
+			this.saveSettings();
+
+		},
 
 		getActionCardCost(actionId) {
 
@@ -1370,9 +1425,16 @@ var app = new Vue({
 
 		getCardThemeExtension(themeId) {
 
-			if (themeId === "classic") {
+			const theme =
+				this.availableCardThemes.find(theme => {
+					return theme.id === themeId;
+				});
+
+			if (theme && theme.extension)
+				return theme.extension;
+
+			if (themeId === "classic")
 				return "svg";
-			}
 
 			return "png";
 
@@ -3774,10 +3836,21 @@ var app = new Vue({
 				return;
 			}
 
+			const hadCardsInPlay =
+				this.cardsInPlay.length > 0;
+
 			this.resetDamidotState();
 
-			this.damidotMode = true;
-			this.damidotPhase = "placement";
+			if (hadCardsInPlay) {
+				this.clearPlayArea();
+			}
+
+			setTimeout(() => {
+
+				this.damidotMode = true;
+				this.damidotPhase = "placement";
+
+			}, hadCardsInPlay ? 650 : 0);
 
 		},
 

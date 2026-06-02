@@ -773,6 +773,12 @@
 						<button @click="applySelectedPlaymatPreset">
 							Appliquer
 						</button>
+
+						<button class="delete-playmat-preset-button"
+							:disabled="isBasePlaymatPreset(selectedPlaymatPresetId)"
+							@click="deleteSelectedPlaymatPreset">
+							Supprimer
+						</button>
 					</div>
 
 					<div class="playmat-preset-row">

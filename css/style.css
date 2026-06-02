@@ -319,6 +319,18 @@ body {
 	cursor: pointer;
 }
 
+.delete-playmat-preset-button {
+	background-color: #4a1111 !important;
+	border-color: #8b2222 !important;
+	color: #fee2e2 !important;
+}
+
+.delete-playmat-preset-button:disabled {
+	opacity: 0.35;
+	filter: grayscale(1);
+	cursor: not-allowed;
+}
+
 .settings-row label {
 	font-weight: bold;
 }
@@ -640,12 +652,10 @@ body {
 
 .deck:hover .deck-top-card {
 	transform:
-		translate(29px, -20px)
-		rotate(7deg) !important;
+		translate(29px, -20px) rotate(7deg) !important;
 
 	filter:
-		drop-shadow(0 12px 16px rgba(0, 0, 0, 0.24))
-		drop-shadow(0 0 10px rgba(180, 120, 255, 0.10));
+		drop-shadow(0 12px 16px rgba(0, 0, 0, 0.24)) drop-shadow(0 0 10px rgba(180, 120, 255, 0.10));
 }
 
 .choice-popup-overlay {
@@ -1185,10 +1195,13 @@ body {
 }
 
 @keyframes battleBurstPulse {
-	0%, 100% {
+
+	0%,
+	100% {
 		transform: scale(0.98);
 		opacity: 0.92;
 	}
+
 	50% {
 		transform: scale(1.03);
 		opacity: 1;
@@ -1196,10 +1209,13 @@ body {
 }
 
 @keyframes battleFlameFloatLeft {
-	0%, 100% {
+
+	0%,
+	100% {
 		transform: translateY(0) scale(1);
 		opacity: 0.68;
 	}
+
 	50% {
 		transform: translateY(-10px) scale(1.05);
 		opacity: 0.88;
@@ -1207,10 +1223,13 @@ body {
 }
 
 @keyframes battleFlameFloatRight {
-	0%, 100% {
+
+	0%,
+	100% {
 		transform: translateY(0) scale(1);
 		opacity: 0.62;
 	}
+
 	50% {
 		transform: translateY(-14px) scale(1.07);
 		opacity: 0.86;
@@ -1218,12 +1237,15 @@ body {
 }
 
 @keyframes battleStartButtonPulse {
-	0%, 100% {
+
+	0%,
+	100% {
 		transform: translateY(0);
 		box-shadow:
 			0 12px 30px rgba(180, 45, 25, 0.35),
 			inset 0 1px 0 rgba(255, 255, 255, 0.18);
 	}
+
 	50% {
 		transform: translateY(-2px);
 		box-shadow:
@@ -1374,8 +1396,7 @@ body {
 	display: block;
 
 	filter:
-		drop-shadow(0 14px 26px rgba(0, 0, 0, 0.34))
-		drop-shadow(0 0 18px rgba(255, 90, 50, 0.08));
+		drop-shadow(0 14px 26px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 18px rgba(255, 90, 50, 0.08));
 }
 
 .battle-suit-chip.red-choice {
@@ -3733,11 +3754,9 @@ body {
 	background:
 		radial-gradient(circle at 18% 0%, rgba(163, 99, 255, 0.22), transparent 36%),
 		radial-gradient(circle at 88% 120%, rgba(255, 80, 190, 0.12), transparent 34%),
-		linear-gradient(
-			180deg,
+		linear-gradient(180deg,
 			rgba(28, 20, 42, 0.94),
-			rgba(14, 12, 21, 0.96)
-		);
+			rgba(14, 12, 21, 0.96));
 
 	border: 1px solid rgba(204, 168, 255, 0.16);
 
@@ -3758,11 +3777,9 @@ body {
 	border-radius: 17px;
 
 	background:
-		linear-gradient(
-			180deg,
+		linear-gradient(180deg,
 			rgba(255, 255, 255, 0.06),
-			rgba(255, 255, 255, 0.025)
-		);
+			rgba(255, 255, 255, 0.025));
 
 	border: 1px solid rgba(255, 255, 255, 0.07);
 
@@ -3797,7 +3814,6 @@ body {
 	height: 100%;
 }
 
-/* Moves compacts */
 .action-moves-grid {
 	display: grid;
 	grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -3816,11 +3832,9 @@ body {
 	border-radius: 12px;
 
 	background:
-		linear-gradient(
-			180deg,
+		linear-gradient(180deg,
 			rgba(133, 86, 255, 0.18),
-			rgba(255, 255, 255, 0.045)
-		);
+			rgba(255, 255, 255, 0.045));
 
 	color: rgba(255, 255, 255, 0.94);
 
@@ -3871,11 +3885,9 @@ body {
 	transform: translateY(-1px);
 
 	background:
-		linear-gradient(
-			180deg,
+		linear-gradient(180deg,
 			rgba(166, 103, 255, 0.32),
-			rgba(87, 55, 175, 0.22)
-		);
+			rgba(87, 55, 175, 0.22));
 
 	border-color: rgba(224, 200, 255, 0.28);
 
@@ -3997,8 +4009,7 @@ body {
 	white-space: normal;
 	overflow: hidden;
 	overflow-wrap: anywhere;
-
-	-webkit-line-clamp: 2;
+	/*-webkit-line-clamp: 2;*/
 	-webkit-box-orient: vertical;
 }
 
@@ -4030,11 +4041,9 @@ body {
 /* Moves : base légèrement colorée mais pas clown */
 .move-action-button {
 	background:
-		linear-gradient(
-			180deg,
+		linear-gradient(180deg,
 			rgba(155, 102, 255, 0.16),
-			rgba(255, 255, 255, 0.04)
-		);
+			rgba(255, 255, 255, 0.04));
 }
 
 /* Un petit accent par move, très subtil */
@@ -4609,9 +4618,10 @@ input[type="reset"] {
 	align-items: center;
 	justify-content: flex-start;
 
-	gap: 6px;
+	gap: 8px;
 
-	padding: 8px 6px;
+	min-height: 128px;
+	padding: 10px 6px;
 
 	border-radius: 10px;
 
@@ -4661,18 +4671,27 @@ input[type="reset"] {
 }
 
 .card-theme-label {
-	max-width: 100%;
+	width: 100%;
+	max-width: 78px;
 
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow: visible;
+	text-overflow: initial;
+	white-space: normal;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	min-height: 28px;
 
 	font-size: 12px;
-	line-height: 1.1;
+	line-height: 1.12;
 
 	color: #ddd;
 
 	text-align: center;
+	word-break: normal;
+	overflow-wrap: anywhere;
 
 	pointer-events: none;
 }
@@ -4751,11 +4770,9 @@ input[type="reset"] {
 	border: 2px dashed rgba(255, 255, 255, 0.20);
 
 	background:
-		linear-gradient(
-			180deg,
+		linear-gradient(180deg,
 			rgba(255, 255, 255, 0.04),
-			rgba(255, 255, 255, 0.02)
-		);
+			rgba(255, 255, 255, 0.02));
 
 	box-shadow:
 		inset 0 0 0 1px rgba(255, 255, 255, 0.04),
