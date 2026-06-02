@@ -3695,3 +3695,97 @@ input[type="reset"] {
 
 	z-index: 0;
 }
+
+.card-theme-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+
+	gap: 12px;
+
+	width: 100%;
+}
+
+.card-theme-choice {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+
+	gap: 6px;
+
+	padding: 8px 6px;
+
+	border-radius: 10px;
+
+	background-color: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+
+	cursor: pointer;
+
+	transition:
+		transform 0.12s ease,
+		border-color 0.12s ease,
+		box-shadow 0.12s ease,
+		background-color 0.12s ease;
+}
+
+.card-theme-choice:hover {
+	transform: translateY(-2px);
+
+	background-color: rgba(255, 255, 255, 0.08);
+	border-color: rgba(180, 200, 255, 0.45);
+
+	box-shadow:
+		0 6px 14px rgba(0, 0, 0, 0.35),
+		0 0 14px rgba(130, 160, 255, 0.18);
+}
+
+.card-theme-choice.active {
+	background-color: rgba(110, 130, 255, 0.16);
+	border-color: rgba(170, 190, 255, 0.85);
+
+	box-shadow:
+		0 0 0 1px rgba(170, 190, 255, 0.42),
+		0 0 18px rgba(120, 145, 255, 0.35);
+}
+
+.card-theme-back {
+	width: 58px;
+	height: 82px;
+
+	object-fit: contain;
+
+	border-radius: 5px;
+
+	filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.55));
+
+	pointer-events: none;
+}
+
+.card-theme-label {
+	max-width: 100%;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	font-size: 12px;
+	line-height: 1.1;
+
+	color: #ddd;
+
+	text-align: center;
+
+	pointer-events: none;
+}
+
+.card-theme-choice.active .card-theme-label {
+	color: white;
+	font-weight: bold;
+}
+
+.pixel-card-theme .card-theme-back,
+.card-theme-back[src*="/pixeldark/"] {
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+}

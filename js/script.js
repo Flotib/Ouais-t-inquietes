@@ -569,6 +569,22 @@ var app = new Vue({
 
 	methods: {
 
+		getCardThemeExtension(themeId) {
+
+			if (themeId === "classic") {
+				return "svg";
+			}
+
+			return "png";
+
+		},
+
+		getCardThemeBackImage(themeId) {
+
+			return `assets/cards/${themeId}/back.${this.getCardThemeExtension(themeId)}`;
+
+		},
+
 		getHoloMaskKey(card) {
 
 			if (!card)

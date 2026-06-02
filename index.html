@@ -588,14 +588,19 @@
 
 				<h2>Options</h2>
 
-				<div class="settings-row">
+				<div class="settings-row settings-column">
 					<label>Style de cartes</label>
 
-					<select v-model="cardTheme">
-						<option v-for="theme in availableCardThemes" :key="theme.id" :value="theme.id">
-							{{ theme.label }}
-						</option>
-					</select>
+					<div class="card-theme-grid">
+						<button v-for="theme in availableCardThemes" :key="theme.id" class="card-theme-choice"
+							:class="{ active: cardTheme === theme.id }" @click="cardTheme = theme.id">
+							<img class="card-theme-back" :src="getCardThemeBackImage(theme.id)" :alt="theme.label" />
+
+							<span class="card-theme-label">
+								{{ theme.label }}
+							</span>
+						</button>
+					</div>
 				</div>
 
 				<div class="settings-row settings-column">
