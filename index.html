@@ -440,26 +440,49 @@
 
 			<div v-if="!isActionBarHidden" class="action-bar">
 
-				<template v-if="!battleMode">
+				<div v-if="!battleMode" class="action-bar-shell">
 
-					<button class="debug-button" @click="debugSecondLifeBattle">
-						Debug bataille
-					</button>
+					<div class="action-predictions-panel">
+						<div class="action-panel-title">
+							Prédictions
+						</div>
 
-					<button class="debug-button" @click="debugDealAllCards">
-						Debug : tout poser
-					</button>
+						<div class="action-predictions-grid">
+							<button v-for="action in predictionActions" :key="action.id"
+								class="action-button prediction-action-button" :class="'action-id-' + action.id"
+								:disabled="isActionDisabled(action)" @click="executeAction(action.id)">
+								{{ action.label }}
+							</button>
+						</div>
+					</div>
 
-					<button class="debug-button" @click="debugGiveRandomSips">
-						Debug +🍺 random
-					</button>
+					<div class="action-moves-panel">
+						<div class="action-panel-title">
+							Moves
+						</div>
 
-					<button v-for="action in actions" :key="action.id" :disabled="secondLifeMode"
-						@click="executeAction(action.id)">
-						{{ action.label }}
-					</button>
+						<div class="action-moves-grid">
+							<button v-for="action in moveActions" :key="action.id"
+								class="action-button move-action-button" :class="'action-id-' + action.id"
+								:disabled="isActionDisabled(action)" :title="action.label"
+								@click="executeAction(action.id)">
+								<span class="move-action-emoji">
+									{{ getMoveEmoji(action.id) }}
+								</span>
 
-				</template>
+								<span class="move-action-label">
+									{{ getActionDisplayLabel(action) }}
+								</span>
+
+								<span class="move-card-cost">
+									{{ getActionCardCost(action.id) }}
+								</span>
+							</button>
+							</button>
+						</div>
+					</div>
+
+				</div>
 
 			</div>
 

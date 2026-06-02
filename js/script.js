@@ -291,6 +291,56 @@ var app = new Vue({
 
 	computed: {
 
+		predictionActions() {
+
+			const predictionIds = [
+				"plus",
+				"minus",
+				"equal",
+				"color",
+				"suit",
+				"value",
+				"card"
+			];
+
+			return this.actions.filter(action => {
+				return predictionIds.includes(action.id);
+			});
+
+		},
+
+		moveActions() {
+
+			const moveOrder = [
+				"fion",
+				"purple",
+				"combat",
+
+				"perfect",
+				"cachecache",
+
+				"ouais",
+				"jumelles",
+				"jack",
+
+				"pinte",
+				"freres",
+				"damidot",
+				"sexe"
+			];
+
+			const moves = this.actions.filter(action => {
+				return !this.predictionActions.some(prediction => {
+					return prediction.id === action.id;
+				});
+			});
+
+			return moves.sort((a, b) => {
+				return moveOrder.indexOf(a.id) - moveOrder.indexOf(b.id);
+			});
+
+		},
+
 		battleLoserPlayer() {
 
 			if (!this.battleLoserId)
@@ -632,6 +682,95 @@ var app = new Vue({
 	},
 
 	methods: {
+
+		getActionCardCost(actionId) {
+
+			const costs = {
+				plus: 1,
+				minus: 1,
+				equal: 1,
+				color: 1,
+				suit: 1,
+				value: 1,
+				card: 1,
+
+				fion: 2,
+				purple: 2,
+				combat: 2,
+
+				perfect: 3,
+				cachecache: 3,
+
+				ouais: 4,
+				jumelles: 4,
+				jack: 4,
+
+				pinte: 5,
+				freres: 6,
+				damidot: 8,
+				sexe: 10
+			};
+
+			return costs[actionId] || 1;
+
+		},
+
+		getActionDisplayLabel(action) {
+
+			if (!action)
+				return "";
+
+			const labels = {
+				damidot: "Valérie Damidot",
+				ouais: "Ouais t'inquiètes",
+				sexe: "Cul Sexe Amour"
+			};
+
+			return labels[action.id] || action.label;
+
+		},
+
+		isActionDisabled(action) {
+
+			if (!action)
+				return true;
+
+			if (this.secondLifeMode || this.battleMode || this.damidotMode)
+				return true;
+
+			if (action.id === "perfect" && this.cardsPlayedThisTurn > 0)
+				return true;
+
+			const cost =
+				this.getActionCardCost(action.id);
+
+			if (this.deck.length < cost)
+				return true;
+
+			return false;
+
+		},
+
+		getMoveEmoji(actionId) {
+
+			const emojis = {
+				purple: "🟣",
+				fion: "🍑",
+				ouais: "🔥",
+				jumelles: "👯",
+				jack: "🃏",
+				pinte: "🍺",
+				freres: "💨",
+				sexe: "😏",
+				combat: "⚔️",
+				perfect: "✨",
+				cachecache: "🫣",
+				damidot: "🎀"
+			};
+
+			return emojis[actionId] || "🎴";
+
+		},
 
 		getBattlePreviewCardImage() {
 
