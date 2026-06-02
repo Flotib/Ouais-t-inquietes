@@ -64,6 +64,49 @@ var app = new Vue({
 
 		cardsInPlay: [],
 
+		cardTrackerSuits: [
+			{
+				id: "hearts",
+				label: "Cœurs",
+				icon: "♥",
+				color: "red"
+			},
+			{
+				id: "diamonds",
+				label: "Carreaux",
+				icon: "♦",
+				color: "red"
+			},
+			{
+				id: "clubs",
+				label: "Trèfles",
+				icon: "♣",
+				color: "black"
+			},
+			{
+				id: "spades",
+				label: "Piques",
+				icon: "♠",
+				color: "black"
+			}
+		],
+
+		cardTrackerValues: [
+			{ id: "ace", label: "A", short: "A" },
+			{ id: "king", label: "K", short: "K" },
+			{ id: "queen", label: "Q", short: "Q" },
+			{ id: "jack", label: "J", short: "J" },
+			{ id: "10", label: "10", short: "10" },
+			{ id: "9", label: "9", short: "9" },
+			{ id: "8", label: "8", short: "8" },
+			{ id: "7", label: "7", short: "7" },
+			{ id: "6", label: "6", short: "6" },
+			{ id: "5", label: "5", short: "5" },
+			{ id: "4", label: "4", short: "4" },
+			{ id: "3", label: "3", short: "3" },
+			{ id: "2", label: "2", short: "2" }
+		],
+
 		flyingCards: [],
 
 		freresPredictionPopup: {
@@ -471,6 +514,62 @@ var app = new Vue({
 	},
 
 	methods: {
+
+		getCardTrackerCardId(value, suit) {
+			return `${value}_of_${suit}`;
+		},
+
+		isCardOutOfDeck(value, suit) {
+			const cardId = this.getCardTrackerCardId(value, suit);
+
+			const inDiscard = this.discardPile.some(card => {
+				return card.id === cardId;
+			});
+
+			const onTable = this.cardsInPlay.some(card => {
+				return card.id === cardId;
+			});
+
+			return inDiscard || onTable;
+		},
+
+		getCardTrackerCellClass(value, suit) {
+			const suitData = this.cardTrackerSuits.find(existingSuit => {
+				return existingSuit.id === suit;
+			});
+
+			const isRed = suitData && suitData.color === "red";
+			const isOut = this.isCardOutOfDeck(value, suit);
+
+			return [
+				isRed ? "card-tracker-red" : "card-tracker-black",
+				isOut ? "card-tracker-out" : "card-tracker-in-deck"
+			];
+		},
+
+		getCardTrackerCellTitle(value, suit) {
+			const isOut = this.isCardOutOfDeck(value.id, suit.id);
+
+			return `${value.label} de ${suit.label} — ${isOut ? "sortie / sur table" : "encore dans le deck"}`;
+		},
+
+		getCardTrackerOutCount() {
+			const outCards = new Set();
+
+			this.discardPile.forEach(card => {
+				if (card && card.id) {
+					outCards.add(card.id);
+				}
+			});
+
+			this.cardsInPlay.forEach(card => {
+				if (card && card.id) {
+					outCards.add(card.id);
+				}
+			});
+
+			return outCards.size;
+		},
 
 		allowPlayerDrop(event) {
 

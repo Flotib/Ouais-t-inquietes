@@ -125,7 +125,8 @@ body {
 }
 
 .discard-area {
-	position: static;
+	/*position: static;*/
+	position: relative;
 
 	display: flex;
 	flex-direction: column;
@@ -3300,4 +3301,212 @@ input[type="reset"] {
 
 .player-drag-preview * {
 	pointer-events: none !important;
+}
+
+.card-tracker {
+	position: absolute;
+	left: -40px;
+	top: 0px;
+	z-index: 3000;
+}
+
+.card-tracker-button {
+	width: 34px;
+	height: 34px;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	padding: 0;
+
+	border-radius: 50%;
+
+	background-color: rgba(20, 20, 20, 0.95);
+	color: white;
+
+	border: 1px solid rgba(255, 255, 255, 0.22);
+
+	font-size: 17px;
+
+	cursor: pointer;
+
+	box-shadow:
+		0 6px 14px rgba(0, 0, 0, 0.45),
+		0 0 12px rgba(255, 255, 255, 0.06);
+}
+
+.card-tracker-button:hover {
+	background-color: #2a2a2a;
+
+	box-shadow:
+		0 8px 18px rgba(0, 0, 0, 0.55),
+		0 0 18px rgba(255, 255, 255, 0.12);
+}
+
+.card-tracker-panel {
+	position: absolute;
+
+	left: 0;
+	top: 42px;
+
+	width: 258px;
+
+	padding: 12px;
+
+	border-radius: 14px;
+
+	background-color: rgb(18, 18, 18);
+
+	border: 1px solid rgba(255, 255, 255, 0.14);
+
+	box-shadow:
+		0 12px 34px rgba(0, 0, 0, 0.65),
+		inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+	opacity: 0;
+	visibility: hidden;
+
+	transform: translateY(-6px) scale(0.98);
+
+	pointer-events: none;
+
+	transition:
+		opacity 0.14s ease,
+		transform 0.14s ease,
+		visibility 0.14s ease;
+}
+
+.card-tracker:hover .card-tracker-panel {
+	opacity: 1;
+	visibility: visible;
+
+	transform: translateY(0) scale(1);
+
+	pointer-events: auto;
+}
+
+.card-tracker-title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	margin-bottom: 10px;
+
+	font-size: 14px;
+	font-weight: 900;
+
+	color: white;
+}
+
+.card-tracker-title span {
+	color: #aaa;
+
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.card-tracker-grid {
+	display: grid;
+	grid-template-columns: 28px repeat(4, 1fr);
+	gap: 4px;
+}
+
+.card-tracker-corner {
+	width: 100%;
+	height: 22px;
+}
+
+.card-tracker-suit,
+.card-tracker-value,
+.card-tracker-cell {
+	height: 22px;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	border-radius: 5px;
+
+	font-size: 12px;
+	font-weight: 900;
+}
+
+.card-tracker-suit {
+	background-color: rgba(255, 255, 255, 0.08);
+
+	border: 1px solid rgba(255, 255, 255, 0.08);
+
+	font-size: 15px;
+}
+
+.card-tracker-value {
+	color: #aaa;
+
+	background-color: rgba(255, 255, 255, 0.035);
+}
+
+.card-tracker-cell {
+	border: 1px solid rgba(255, 255, 255, 0.08);
+
+	transition:
+		opacity 0.12s ease,
+		filter 0.12s ease,
+		background-color 0.12s ease,
+		box-shadow 0.12s ease;
+}
+
+.card-tracker-red {
+	color: #ff6b6b;
+}
+
+.card-tracker-black {
+	color: #e5e7eb;
+}
+
+.card-tracker-out.card-tracker-red {
+	background:
+		linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.34),
+			rgba(127, 29, 29, 0.72)
+		);
+
+	border-color: rgba(248, 113, 113, 0.55);
+
+	box-shadow:
+		0 0 7px rgba(239, 68, 68, 0.24);
+}
+
+.card-tracker-out.card-tracker-black {
+	background:
+		linear-gradient(
+			135deg,
+			rgba(229, 231, 235, 0.22),
+			rgba(55, 65, 81, 0.72)
+		);
+
+	border-color: rgba(229, 231, 235, 0.32);
+
+	box-shadow:
+		0 0 7px rgba(229, 231, 235, 0.12);
+}
+
+.card-tracker-in-deck {
+	opacity: 0.28;
+
+	background-color: rgba(0, 0, 0, 0.55);
+
+	border-color: rgba(255, 255, 255, 0.04);
+
+	filter: grayscale(1) brightness(0.55);
+}
+
+.card-tracker-hint {
+	margin-top: 9px;
+
+	color: #777;
+
+	font-size: 10px;
+	text-align: center;
 }

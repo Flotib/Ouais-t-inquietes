@@ -20,8 +20,62 @@
 
 			<div class="left-panel">
 
-				<div class="discard-area">
-					<p>Cimetière</p>
+	<div class="discard-area">
+
+		<div class="card-tracker">
+			<button class="card-tracker-button">
+				👁
+			</button>
+
+			<div class="card-tracker-panel">
+				<div class="card-tracker-title">
+					Cartes sorties
+					<span>{{ getCardTrackerOutCount() }}/52</span>
+				</div>
+
+				<div class="card-tracker-grid">
+
+					<div class="card-tracker-corner"></div>
+
+					<div
+						v-for="suit in cardTrackerSuits"
+						:key="'tracker-suit-' + suit.id"
+						class="card-tracker-suit"
+						:class="suit.color === 'red' ? 'card-tracker-red' : 'card-tracker-black'"
+					>
+						{{ suit.icon }}
+					</div>
+
+					<template v-for="value in cardTrackerValues">
+
+						<div
+							:key="'tracker-value-' + value.id"
+							class="card-tracker-value"
+						>
+							{{ value.label }}
+						</div>
+
+						<div
+							v-for="suit in cardTrackerSuits"
+							:key="'tracker-card-' + value.id + '-' + suit.id"
+							class="card-tracker-cell"
+							:class="getCardTrackerCellClass(value.id, suit.id)"
+							:title="getCardTrackerCellTitle(value, suit)"
+						>
+							{{ value.short }}
+						</div>
+
+					</template>
+
+				</div>
+
+				<div class="card-tracker-hint">
+					Clair = sorti / table · Sombre = encore dans le deck
+				</div>
+			</div>
+		</div>
+
+		<p>Cimetière</p>
 
 					<div class="discard-pile" @click.stop="openDiscardView">
 
@@ -186,7 +240,7 @@
 								<span>×</span>
 							</button>
 
-							<div v-if="shiftPressed" class="player-drag-handle" title="Déplacer le joueur"
+							<div v-if="shiftPressed" class="player-drag-handle"
 								draggable="true" @dragstart.stop="startPlayerDrag(player, $event)">
 								<span></span>
 								<span></span>
