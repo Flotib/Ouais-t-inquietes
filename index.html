@@ -55,84 +55,68 @@
 										{{ value.short }}
 									</div>
 
-								</template>
 
 							</div>
 
-							<div class="card-tracker-hint">
-								Clair = sorti · Sombre = encore dans le deck
-							</div>
-						</div>
-					</div>
-
-					<p>Cimetière</p>
-
-					<div class="discard-pile" @click.stop="openDiscardView">
-
-						<div class="discard-animation-target"></div>
-
-						<img v-for="discardCard in visibleDiscardStack" :key="discardCard.stackKey + '-' + cardTheme"
-							class="stacked-card discard-card-front" :src="getCardDisplayImage(discardCard)"
-							:style="discardCard.style" />
-
-						<span v-if="discardPile.length === 0" class="empty-pile-text">
-							Vide
-						</span>
-
-					</div>
-
-					<button class="shuffle-button" @click="resetAndShuffleDeck">
-						Remélanger
-					</button>
-
-					<button class="shuffle-button" @click="clearPlayArea">
-						Nettoyer
-					</button>
-
-					<div class="discard-stats">
-						<p>🃏 {{ cardsText(totalPlayedCardsForSips) }}</p>
-						<p>🍻 {{ sipsText(discardSips) }}</p>
-					</div>
-
-					<div class="ace-mode-container">
-
-						<button class="ace-mode-button" @click="toggleAceMode"
-							@contextmenu.prevent="aceMenuOpen = !aceMenuOpen">
-							As : {{ aceModeLabel }}
-						</button>
-
-						<div v-if="aceMenuOpen" class="ace-mode-menu">
-
-							<button @click="setAceMode('high')">
-								⬆️ As fort
-							</button>
-
-							<button @click="setAceMode(null)">
-								❔ As indéfini
-							</button>
-
-							<button @click="setAceMode('low')">
-								⬇️ As faible
-							</button>
+							</template>
 
 						</div>
 
+						<div class="card-tracker-hint">
+							Clair = sorti · Sombre = encore dans le deck
+						</div>
 					</div>
+				</div>
+
+				<p>Cimetière</p>
+
+				<div class="discard-pile" @click.stop="openDiscardView">
+
+					<div class="discard-animation-target"></div>
+
+					<img v-for="discardCard in visibleDiscardStack" :key="discardCard.stackKey + '-' + cardTheme"
+						class="stacked-card discard-card-front" :src="getCardDisplayImage(discardCard)"
+						:style="discardCard.style" />
+
+					<span v-if="discardPile.length === 0" class="empty-pile-text">
+						Vide
+					</span>
 
 				</div>
 
-				<div class="bottom-left-area">
+				<button class="shuffle-button" @click="resetAndShuffleDeck">
+					Remélanger
+				</button>
 
-					<p class="cards-counter">
-						{{ cardsRemaining }} / {{ deckSize }}
-					</p>
+				<button class="shuffle-button" @click="clearPlayArea">
+					Nettoyer
+				</button>
 
-					<div class="deck" @click="handleDeckLeftClick" @contextmenu.prevent="drawCardFaceDown">
+				<div class="discard-stats">
+					<p>🃏 {{ cardsText(totalPlayedCardsForSips) }}</p>
+					<p>🍻 {{ sipsText(discardSips) }}</p>
+				</div>
 
-						<img v-for="(cardBack, index) in visibleDeckStack" :key="cardBack.id"
-							class="stacked-card deck-card-back"
-							:class="{ 'deck-top-card': index === visibleDeckStack.length - 1 }" :src="cardBack.image"
-							:style="cardBack.style" />
+				<div class="ace-mode-container">
+
+					<button class="ace-mode-button" @click="toggleAceMode"
+						@contextmenu.prevent="aceMenuOpen = !aceMenuOpen">
+						As : {{ aceModeLabel }}
+					</button>
+
+					<div v-if="aceMenuOpen" class="ace-mode-menu">
+
+						<button @click="setAceMode('high')">
+							⬆️ As fort
+						</button>
+
+						<button @click="setAceMode(null)">
+							❔ As indéfini
+						</button>
+
+						<button @click="setAceMode('low')">
+							⬇️ As faible
+						</button>
 
 					</div>
 
@@ -140,26 +124,45 @@
 
 			</div>
 
-			<div class="draw-area" :style="playmatStyle" :class="{
+			<div class="bottom-left-area">
+
+				<p class="cards-counter">
+					{{ cardsRemaining }} / {{ deckSize }}
+				</p>
+
+				<div class="deck" @click="handleDeckLeftClick" @contextmenu.prevent="drawCardFaceDown">
+
+					<img v-for="(cardBack, index) in visibleDeckStack" :key="cardBack.id"
+						class="stacked-card deck-card-back"
+						:class="{ 'deck-top-card': index === visibleDeckStack.length - 1 }" :src="cardBack.image"
+						:style="cardBack.style" />
+
+				</div>
+
+			</div>
+
+		</div>
+
+		<div class="draw-area" :style="playmatStyle" :class="{
 		'play-area-success': playAreaFeedback === 'success',
 		'play-area-fail': playAreaFeedback === 'fail'
 	}">
 
-				<div class="battle-stack-target"></div>
+			<div class="battle-stack-target"></div>
 
-				<div v-if="secondLifeMode" class="second-life-title">
-					Qui gagne ?!
-				</div>
+			<div v-if="secondLifeMode" class="second-life-title">
+				Qui gagne ?!
+			</div>
 
-				<div v-if="secondLifeResultPop" class="second-life-result-pop" :class="secondLifeResultPop.type">
-					{{ secondLifeResultPop.text }}
-				</div>
+			<div v-if="secondLifeResultPop" class="second-life-result-pop" :class="secondLifeResultPop.type">
+				{{ secondLifeResultPop.text }}
+			</div>
 
-				<div v-if="secondLifeChoicePop" class="second-life-choice-pop" :style="secondLifeChoicePop.style">
-					Celle-là !
-				</div>
+			<div v-if="secondLifeChoicePop" class="second-life-choice-pop" :style="secondLifeChoicePop.style">
+				Celle-là !
+			</div>
 
-				<div v-if="damidotMode" class="damidot-ui" :class="{
+			<div v-if="damidotMode" class="damidot-ui" :class="{
 		'damidot-placement-phase': damidotPhase === 'placement',
 		'damidot-choose-phase': damidotPhase === 'choose-side',
 		'damidot-reveal-phase': damidotPhase === 'reveal',
@@ -167,149 +170,147 @@
 		'damidot-resolved-phase': damidotPhase === 'resolved'
 	}">
 
-					<div class="damidot-group damidot-group-left">
+				<div class="damidot-group damidot-group-left">
 
-						<div class="damidot-slot-grid">
-							<button v-for="slotIndex in 4" :key="'left-' + slotIndex" class="damidot-slot" :class="{
+					<div class="damidot-slot-grid">
+						<button v-for="slotIndex in 4" :key="'left-' + slotIndex" class="damidot-slot" :class="{
 						filled: isDamidotSlotOccupied('left', slotIndex - 1),
 						clickable: damidotPhase === 'placement' && !isDamidotSlotOccupied('left', slotIndex - 1)
 						}" @click="placeDamidotCardInSlot('left', slotIndex - 1)"></button>
-						</div>
-
-						<button v-if="damidotPhase === 'choose-side'" class="damidot-side-overlay"
-							@click="chooseDamidotSide('left')"></button>
-
-						<div class="damidot-counter" v-html="getDamidotGroupTotalLabel('left')"></div>
-
 					</div>
 
-					<div class="damidot-group damidot-group-right">
+					<button v-if="damidotPhase === 'choose-side'" class="damidot-side-overlay"
+						@click="chooseDamidotSide('left')"></button>
 
-						<div class="damidot-slot-grid">
-							<button v-for="slotIndex in 4" :key="'right-' + slotIndex" class="damidot-slot" :class="{
-						filled: isDamidotSlotOccupied('right', slotIndex - 1),
-						clickable: damidotPhase === 'placement' && !isDamidotSlotOccupied('right', slotIndex - 1)
-						}" @click="placeDamidotCardInSlot('right', slotIndex - 1)"></button>
-						</div>
-
-						<button v-if="damidotPhase === 'choose-side'" class="damidot-side-overlay"
-							@click="chooseDamidotSide('right')"></button>
-
-						<div class="damidot-counter" v-html="getDamidotGroupTotalLabel('right')"></div>
-
-					</div>
-
-					<button v-if="damidotPhase === 'ready-to-resolve'" class="damidot-finish-button"
-						@click="finishDamidot">
-						Terminer
-					</button>
+					<div class="damidot-counter" v-html="getDamidotGroupTotalLabel('left')"></div>
 
 				</div>
 
-				<div class="cards-container" :class="{ 'battle-stack-shadow-active': battleMode }"
-					:style="[overlapCardStyle, battleStackShadowStyle]">
+				<div class="damidot-group damidot-group-right">
 
-					<div class="card" v-for="(card, index) in cardsInPlay" :key="card.uniqueKey"
-						:data-card-key="card.uniqueKey" :style="getTableCardStyle(card, index)" :class="{
+					<div class="damidot-slot-grid">
+						<button v-for="slotIndex in 4" :key="'right-' + slotIndex" class="damidot-slot" :class="{
+						filled: isDamidotSlotOccupied('right', slotIndex - 1),
+						clickable: damidotPhase === 'placement' && !isDamidotSlotOccupied('right', slotIndex - 1)
+						}" @click="placeDamidotCardInSlot('right', slotIndex - 1)"></button>
+					</div>
+
+					<button v-if="damidotPhase === 'choose-side'" class="damidot-side-overlay"
+						@click="chooseDamidotSide('right')"></button>
+
+					<div class="damidot-counter" v-html="getDamidotGroupTotalLabel('right')"></div>
+
+				</div>
+
+				<button v-if="damidotPhase === 'ready-to-resolve'" class="damidot-finish-button" @click="finishDamidot">
+					Terminer
+				</button>
+
+			</div>
+
+			<div class="cards-container" :class="{ 'battle-stack-shadow-active': battleMode }"
+				:style="[overlapCardStyle, battleStackShadowStyle]">
+
+				<div class="card" v-for="(card, index) in cardsInPlay" :key="card.uniqueKey"
+					:data-card-key="card.uniqueKey" :style="getTableCardStyle(card, index)" :class="{
 							invisible: card.invisible,
 							'hidden-card': !card.faceUp,
 							'battle-matched-card': card.battleMatched,
 							'battle-card': battleMode,
 							'second-life-card': card.secondLifeCard,
 						}" @click="handleTableCardClick(card)">
-						<div class="table-card-inner" :class="{ flipped: card.faceUp }">
-							<img class="table-card-face table-card-back" :src="backCardImage" />
+					<div class="table-card-inner" :class="{ flipped: card.faceUp }">
+						<img class="table-card-face table-card-back" :src="backCardImage" />
 
-							<img class="table-card-face table-card-front" :src="getCardDisplayImage(card)" />
+						<img class="table-card-face table-card-front" :src="getCardDisplayImage(card)" />
 
-							<div v-if="card.battleMatched"
-								class="table-card-face table-card-front table-card-holo-overlay holo-mask"
-								:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
-							</div>
+						<div v-if="card.battleMatched"
+							class="table-card-face table-card-front table-card-holo-overlay holo-mask"
+							:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
 						</div>
 					</div>
-
 				</div>
 
 			</div>
 
-			<div v-if="battleMode && battleLoserId && battleRevealFinished" class="battle-finished-panel">
-				<div class="battle-finished-kicker">BATTLE ROYALE</div>
+		</div>
 
-				<h3>Partie terminée</h3>
+		<div v-if="battleMode && battleLoserId && battleRevealFinished" class="battle-finished-panel">
+			<div class="battle-finished-kicker">BATTLE ROYALE</div>
 
-				<p class="battle-finished-subtitle">
-					<span v-if="battleLoserPlayer">
-						{{ battleLoserPlayer.name }} doit boire {{ sipsText(lockedDiscardSips || discardSips) }}.
-					</span>
-				</p>
+			<h3>Partie terminée</h3>
 
-				<div class="battle-finished-actions">
-					<button class="battle-finished-button secondary" @click="openBattleStackView">
-						Visionner le jeu
-					</button>
+			<p class="battle-finished-subtitle">
+				<span v-if="battleLoserPlayer">
+					{{ battleLoserPlayer.name }} doit boire {{ sipsText(lockedDiscardSips || discardSips) }}.
+				</span>
+			</p>
 
-					<button class="battle-finished-button primary" @click="restartGame">
-						Recommencer
-					</button>
-				</div>
-			</div>
-
-			<div v-if="battleRoyaleAvailable" class="battle-royale-cta" @click="openBattleRoyaleSetup">
-				<div class="battle-royale-cta-burst"></div>
-				<div class="battle-royale-cta-flame battle-royale-cta-flame-left"></div>
-				<div class="battle-royale-cta-flame battle-royale-cta-flame-right"></div>
-
-				<div class="battle-royale-cta-content">
-					<div class="battle-royale-kicker">FIN DE PARTIE</div>
-					<h2>BATTLE ROYALE</h2>
-					<p>Que le plus chanceux l'emporte...</p>
-
-					<div class="battle-royale-start-button">
-						START BATTLE
-					</div>
-				</div>
-			</div>
-
-			<div class="flying-cards-layer">
-
-				<div v-for="flyingCard in flyingCards" :key="flyingCard.id" class="flying-card"
-					:class="{ 'battle-flying-card': flyingCard.battleFlying }" :style="getFlyingCardStyle(flyingCard)">
-					<div class="flying-card-rotator" :class="{ flipped: flyingCard.flipped }">
-						<img class="flying-card-face flying-card-back" :src="flyingCard.backImage" />
-
-						<img class="flying-card-face flying-card-front" :src="getFlyingCardDisplayImage(flyingCard)" />
-					</div>
-				</div>
-
-			</div>
-
-			<div class="players-panel">
-
-				<h2>Joueurs</h2>
-
-				<button class="settings-button" @click="settingsOpen = true">
-					⚙
+			<div class="battle-finished-actions">
+				<button class="battle-finished-button secondary" @click="openBattleStackView">
+					Visionner le jeu
 				</button>
 
-				<transition-group name="player-reorder" tag="div" class="players-list" :class="{
+				<button class="battle-finished-button primary" @click="restartGame">
+					Recommencer
+				</button>
+			</div>
+		</div>
+
+		<div v-if="battleRoyaleAvailable" class="battle-royale-cta" @click="openBattleRoyaleSetup">
+			<div class="battle-royale-cta-burst"></div>
+			<div class="battle-royale-cta-flame battle-royale-cta-flame-left"></div>
+			<div class="battle-royale-cta-flame battle-royale-cta-flame-right"></div>
+
+			<div class="battle-royale-cta-content">
+				<div class="battle-royale-kicker">FIN DE PARTIE</div>
+				<h2>BATTLE ROYALE</h2>
+				<p>Que le plus chanceux l'emporte...</p>
+
+				<div class="battle-royale-start-button">
+					START BATTLE
+				</div>
+			</div>
+		</div>
+
+		<div class="flying-cards-layer">
+
+			<div v-for="flyingCard in flyingCards" :key="flyingCard.id" class="flying-card"
+				:class="{ 'battle-flying-card': flyingCard.battleFlying }" :style="getFlyingCardStyle(flyingCard)">
+				<div class="flying-card-rotator" :class="{ flipped: flyingCard.flipped }">
+					<img class="flying-card-face flying-card-back" :src="flyingCard.backImage" />
+
+					<img class="flying-card-face flying-card-front" :src="getFlyingCardDisplayImage(flyingCard)" />
+				</div>
+			</div>
+
+		</div>
+
+		<div class="players-panel">
+
+			<h2>Joueurs</h2>
+
+			<button class="settings-button" @click="settingsOpen = true">
+				⚙
+			</button>
+
+			<transition-group name="player-reorder" tag="div" class="players-list" :class="{
 	'player-list-dragging': draggingPlayerId,
 	'player-list-edit-mode': shiftPressed
 }" :css="playerReorderAnimationsEnabled" @scroll="updateSipAnimationPositions" @dragenter.prevent="allowPlayerDrop"
-					@dragover.prevent="updatePlayerInsertPositionFromList" @drop.prevent="dropPlayerAtInsertIndex">
+				@dragover.prevent="updatePlayerInsertPositionFromList" @drop.prevent="dropPlayerAtInsertIndex">
 
-					<template v-for="(player, playerIndex) in players">
+				<template v-for="(player, playerIndex) in players">
 
-						<div v-if="shiftPressed && draggingPlayerId" :key="'drop-before-' + player.id"
-							class="player-drop-zone"
-							:class="{ 'player-drop-zone-active': dragInsertIndex === playerIndex }"
-							@dragenter.prevent="setPlayerInsertIndex(playerIndex, $event)"
-							@dragover.prevent="setPlayerInsertIndex(playerIndex, $event)"
-							@drop.prevent="dropPlayerAtInsertIndex">
-							<div class="player-insert-line"></div>
-						</div>
+					<div v-if="shiftPressed && draggingPlayerId" :key="'drop-before-' + player.id"
+						class="player-drop-zone" :class="{ 'player-drop-zone-active': dragInsertIndex === playerIndex }"
+						@dragenter.prevent="setPlayerInsertIndex(playerIndex, $event)"
+						@dragover.prevent="setPlayerInsertIndex(playerIndex, $event)"
+						@drop.prevent="dropPlayerAtInsertIndex">
+						<div class="player-insert-line"></div>
+					</div>
 
-						<div :key="player.id" class="player-card" :data-player-id="player.id" :class="[
+					<div :key="player.id" class="player-card" :data-player-id="player.id" :class="[
 			{
 				active: !battleMode && currentPlayer && currentPlayer.id === player.id,
 				'player-dragging': draggingPlayerId === player.id,
@@ -317,588 +318,583 @@
 			},
 			getBattlePlayerResultClass(player)
 		]" :draggable="shiftPressed" @dragstart="startPlayerDrag(player, $event)" @dragenter.prevent="allowPlayerDrop"
-							@dragover.prevent="updatePlayerInsertPosition(playerIndex, $event)"
-							@drop.prevent="dropPlayerAtInsertIndex" @dragend="endPlayerDrag">
-							<button v-if="shiftPressed" class="player-delete-button" @click.stop="removePlayer(player)">
-								<span>×</span>
-							</button>
+						@dragover.prevent="updatePlayerInsertPosition(playerIndex, $event)"
+						@drop.prevent="dropPlayerAtInsertIndex" @dragend="endPlayerDrag">
+						<button v-if="shiftPressed" class="player-delete-button" @click.stop="removePlayer(player)">
+							<span>×</span>
+						</button>
 
-							<div v-if="shiftPressed" class="player-drag-handle" draggable="true"
-								@dragstart.stop="startPlayerDrag(player, $event)">
-								<span></span>
-								<span></span>
-								<span></span>
-								<span></span>
-								<span></span>
-								<span></span>
-							</div>
+						<div v-if="shiftPressed" class="player-drag-handle" draggable="true"
+							@dragstart.stop="startPlayerDrag(player, $event)">
+							<span></span>
+							<span></span>
+							<span></span>
+							<span></span>
+							<span></span>
+							<span></span>
+						</div>
 
-							<div class="player-main-line">
-
-								<div class="player-name-row">
-
-									<input v-if="editingPlayerId !== null && editingPlayerId === player.id"
-										ref="editPlayerInput" v-model="editingPlayerName" class="player-name-input"
-										@keyup.enter="confirmEditingPlayer(player)" @keyup.esc="cancelEditingPlayer"
-										@blur="confirmEditingPlayer(player)" />
-
-									<template v-else>
-
-										<p class="player-name-text">
-											{{ player.name }}
-										</p>
-
-										<button class="player-edit-button" draggable="false"
-											@mousedown.prevent.stop="startEditingPlayer(player)">
-											✎
-										</button>
-
-									</template>
-
-								</div>
-
-								<div v-if="battleMode && battleChoices[player.id]" class="player-battle-choice-inline"
-									:class="getBattleChoiceColorClass(battleChoices[player.id])">
-									{{ getBattleChoiceLabel(battleChoices[player.id]) }}
-								</div>
-
-								<div v-if="battleMode && battleChoices[player.id] && battleChoices[player.id].found"
-									class="battle-found-counter" :class="getBattlePlayerResultClass(player)">
-									#{{ battleChoices[player.id].foundOrder }}
-								</div>
-
-							</div>
-
-							<p>❤️ {{ player.hp }}</p>
-							<p>🃏 {{ cardsText(getPlayerPlayedCardsCount(player.id)) }}</p>
-
-							<div class="player-bottom-line">
-
-								<p :key="'sips-stat-' + player.id + '-' + getSipStatAnimationKey(player.id)"
-									class="player-sips-stat"
-									:class="{ 'player-sips-stat-gain': hasActiveSipAnimation(player.id) }">
-									🍺 {{ sipsText(player.sessionSips || 0) }}
-								</p>
-
-								<div class="player-interrupt-buttons">
-
-									<button class="player-mini-button rot-button" :disabled="!canPlayForcedFreres()"
-										@click.stop="forceInterruptMove(player, 'freres')">
-										rot
-									</button>
-
-									<button class="player-mini-button bouffon-button"
-										:disabled="!canPlayForcedBouffon()"
-										@click.stop="forceInterruptMove(player, 'bouffon')">
-										7
-									</button>
-
-								</div>
-
-							</div>
-					</template>
-
-					<div v-if="shiftPressed && draggingPlayerId" key="player-drop-end-zone"
-						class="player-drop-zone player-drop-end-zone"
-						:class="{ 'player-drop-zone-active': dragInsertIndex === players.length }"
-						@dragenter.prevent="setPlayerInsertIndex(players.length, $event)"
-						@dragover.prevent="setPlayerInsertIndex(players.length, $event)"
-						@drop.prevent="dropPlayerAtInsertIndex">
-						<div class="player-insert-line"></div>
-					</div>
-
-					<div v-if="pendingPlayerCreation" key="pending-player"
-						class="player-card pending-player-card player-card-no-enter-animation" @click.stop>
 						<div class="player-main-line">
 
-							<input ref="pendingPlayerInput" class="player-name-input pending-player-input"
-								v-model="pendingPlayerName" placeholder="Nom du joueur"
-								@keydown.enter.prevent="confirmPendingPlayerCreation"
-								@keydown.esc.prevent="cancelPendingPlayerCreation" @blur="confirmPendingPlayerCreation"
-								@click.stop>
+							<div class="player-name-row">
 
-						</div>
-					</div>
+								<input v-if="editingPlayerId !== null && editingPlayerId === player.id"
+									ref="editPlayerInput" v-model="editingPlayerName" class="player-name-input"
+									@keyup.enter="confirmEditingPlayer(player)" @keyup.esc="cancelEditingPlayer"
+									@blur="confirmEditingPlayer(player)" />
 
-					<div v-else key="add-player" class="player-card add-player-card player-card-no-enter-animation"
-						@click.stop="addPlayer">
-						<span>+</span>
-					</div>
+								<template v-else>
 
-				</transition-group>
+									<p class="player-name-text">
+										{{ player.name }}
+									</p>
 
-				<button v-if="!battleMode" class="next-turn-button" @click="nextTurn"
-					:disabled="!shiftPressed && (cardsPlayedThisTurn < 3 || turnFailed)">
-					Passer le tour ({{ cardsPlayedThisTurn }}/3)
-				</button>
+									<button class="player-edit-button" draggable="false"
+										@mousedown.prevent.stop="startEditingPlayer(player)">
+										✎
+									</button>
 
-				<button v-if="!battleMode && !secondLifeMode" class="death-button"
-					:class="{ 'death-button-alert': turnFailed }" @click="handlePlayerDeath(currentPlayer)">
-					☠️ Perte du joueur
-				</button>
-
-			</div>
-
-			<div v-if="!isActionBarHidden" class="action-bar">
-
-				<div v-if="!battleMode" class="action-bar-shell">
-
-					<div class="action-predictions-panel">
-						<div class="action-panel-title">
-							Prédictions
-						</div>
-
-						<div class="action-predictions-grid">
-							<button v-for="action in predictionActions" :key="action.id"
-								class="action-button prediction-action-button" :class="'action-id-' + action.id"
-								:disabled="isActionDisabled(action)" @click="executeAction(action.id)">
-								{{ action.label }}
-							</button>
-						</div>
-					</div>
-
-					<div class="action-moves-panel">
-						<div class="action-panel-title">
-							Moves
-						</div>
-
-						<div class="action-moves-grid">
-							<button v-for="action in moveActions" :key="action.id"
-								class="action-button move-action-button" :class="'action-id-' + action.id"
-								:disabled="isActionDisabled(action)"
-								@click="executeAction(action.id)">
-								<span class="move-action-emoji">
-									{{ getMoveEmoji(action.id) }}
-								</span>
-
-								<span class="move-action-label">
-									{{ getActionDisplayLabel(action) }}
-								</span>
-
-								<span class="move-card-cost">
-									{{ getActionCardCost(action.id) }}
-								</span>
-							</button>
-							</button>
-						</div>
-					</div>
-
-				</div>
-
-			</div>
-
-		</div>
-
-		<div v-if="discardViewOpen" class="discard-view-overlay" @click.self="closeDiscardView">
-			<div class="discard-view">
-
-				<button class="close-discard-view" @click="closeDiscardView">×</button>
-
-				<h2>Cimetière</h2>
-
-				<div class="discard-fan" @mousemove="updateHoveredDiscardCard"
-					@mouseleave="hoveredDiscardCardIndex = null">
-					<div v-for="(card, index) in discardPile" :key="card.uniqueKey + '-fan'"
-						class="discard-fan-card-wrapper" :style="getDiscardFanCardStyle(index)">
-						<div class="discard-fan-card-frame">
-							<img class="discard-fan-card" :src="getCardDisplayImage(card)" />
-
-							<div v-if="card && card.battleMatched" class="holo-mask"
-								:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
+								</template>
 
 							</div>
+
+							<div v-if="battleMode && battleChoices[player.id]" class="player-battle-choice-inline"
+								:class="getBattleChoiceColorClass(battleChoices[player.id])">
+								{{ getBattleChoiceLabel(battleChoices[player.id]) }}
+							</div>
+
+							<div v-if="battleMode && battleChoices[player.id] && battleChoices[player.id].found"
+								class="battle-found-counter" :class="getBattlePlayerResultClass(player)">
+								#{{ battleChoices[player.id].foundOrder }}
+							</div>
+
 						</div>
+
+						<p>❤️ {{ player.hp }}</p>
+						<p>🃏 {{ cardsText(getPlayerPlayedCardsCount(player.id)) }}</p>
+
+						<div class="player-bottom-line">
+
+							<p :key="'sips-stat-' + player.id + '-' + getSipStatAnimationKey(player.id)"
+								class="player-sips-stat"
+								:class="{ 'player-sips-stat-gain': hasActiveSipAnimation(player.id) }">
+								🍺 {{ sipsText(player.sessionSips || 0) }}
+							</p>
+
+							<div class="player-interrupt-buttons">
+
+								<button class="player-mini-button rot-button" :disabled="!canPlayForcedFreres()"
+									@click.stop="forceInterruptMove(player, 'freres')">
+									rot
+								</button>
+
+								<button class="player-mini-button bouffon-button" :disabled="!canPlayForcedBouffon()"
+									@click.stop="forceInterruptMove(player, 'bouffon')">
+									7
+								</button>
+
+							</div>
+
+						</div>
+				</template>
+
+				<div v-if="shiftPressed && draggingPlayerId" key="player-drop-end-zone"
+					class="player-drop-zone player-drop-end-zone"
+					:class="{ 'player-drop-zone-active': dragInsertIndex === players.length }"
+					@dragenter.prevent="setPlayerInsertIndex(players.length, $event)"
+					@dragover.prevent="setPlayerInsertIndex(players.length, $event)"
+					@drop.prevent="dropPlayerAtInsertIndex">
+					<div class="player-insert-line"></div>
+				</div>
+
+				<div v-if="pendingPlayerCreation" key="pending-player"
+					class="player-card pending-player-card player-card-no-enter-animation" @click.stop>
+					<div class="player-main-line">
+
+						<input ref="pendingPlayerInput" class="player-name-input pending-player-input"
+							v-model="pendingPlayerName" placeholder="Nom du joueur"
+							@keydown.enter.prevent="confirmPendingPlayerCreation"
+							@keydown.esc.prevent="cancelPendingPlayerCreation" @blur="confirmPendingPlayerCreation"
+							@click.stop>
+
+					</div>
+				</div>
+
+				<div v-else key="add-player" class="player-card add-player-card player-card-no-enter-animation"
+					@click.stop="addPlayer">
+					<span>+</span>
+				</div>
+
+			</transition-group>
+
+			<button v-if="!battleMode" class="next-turn-button" @click="nextTurn"
+				:disabled="!shiftPressed && (cardsPlayedThisTurn < 3 || turnFailed)">
+				Passer le tour ({{ cardsPlayedThisTurn }}/3)
+			</button>
+
+			<button v-if="!battleMode && !secondLifeMode" class="death-button"
+				:class="{ 'death-button-alert': turnFailed }" @click="handlePlayerDeath(currentPlayer)">
+				☠️ Perte du joueur
+			</button>
+
+		</div>
+
+		<div v-if="!isActionBarHidden" class="action-bar">
+
+			<div v-if="!battleMode" class="action-bar-shell">
+
+				<div class="action-predictions-panel">
+					<div class="action-panel-title">
+						Prédictions
+					</div>
+
+					<div class="action-predictions-grid">
+						<button v-for="action in predictionActions" :key="action.id"
+							class="action-button prediction-action-button" :class="'action-id-' + action.id"
+							:disabled="isActionDisabled(action)" @click="executeAction(action.id)">
+							{{ action.label }}
+						</button>
+					</div>
+				</div>
+
+				<div class="action-moves-panel">
+					<div class="action-panel-title">
+						Moves
+					</div>
+
+					<div class="action-moves-grid">
+						<button v-for="action in moveActions" :key="action.id" class="action-button move-action-button"
+							:class="'action-id-' + action.id" :disabled="isActionDisabled(action)"
+							@click="executeAction(action.id)">
+							<span class="move-action-emoji">
+								{{ getMoveEmoji(action.id) }}
+							</span>
+
+							<span class="move-action-label">
+								{{ getActionDisplayLabel(action) }}
+							</span>
+
+							<span class="move-card-cost">
+								{{ getActionCardCost(action.id) }}
+							</span>
+						</button>
+
 					</div>
 				</div>
 
 			</div>
+
 		</div>
 
-		<div v-if="battleSetupOpen" class="battle-setup-overlay">
-			<div class="battle-setup battle-setup-modern">
+	</div>
 
-				<button class="choice-popup-close" @click="battleSetupOpen = false">
-					×
-				</button>
+	<div v-if="discardViewOpen" class="discard-view-overlay" @click.self="closeDiscardView">
+		<div class="discard-view">
 
-				<div class="battle-setup-header">
-					<div class="battle-setup-kicker">BATTLE ROYALE</div>
-					<h2>Choisis ta carte</h2>
-					<p>Chaque joueur choisit une carte unique. Le dernier à voir sortir la sienne perd.</p>
-				</div>
+			<button class="close-discard-view" @click="closeDiscardView">×</button>
 
-				<div class="battle-setup-topbar">
-					<div class="battle-setup-player-badge">
-						<span class="battle-setup-player-label">JOUEUR ACTUEL</span>
-						<strong>{{ battleCurrentPlayer.name }}</strong>
-					</div>
+			<h2>Cimetière</h2>
 
-					<div class="battle-setup-step-badge">
-						{{ battleChoiceIndex + 1 }} / {{ players.length }}
-					</div>
-				</div>
+			<div class="discard-fan" @mousemove="updateHoveredDiscardCard" @mouseleave="hoveredDiscardCardIndex = null">
+				<div v-for="(card, index) in discardPile" :key="card.uniqueKey + '-fan'"
+					class="discard-fan-card-wrapper" :style="getDiscardFanCardStyle(index)">
+					<div class="discard-fan-card-frame">
+						<img class="discard-fan-card" :src="getCardDisplayImage(card)" />
 
-				<div class="battle-setup-preview-row">
+						<div v-if="card && card.battleMatched" class="holo-mask"
+							:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
 
-					<div class="battle-card-preview">
-						<img class="battle-card-preview-image" :src="getBattlePreviewCardImage()" alt="" />
-					</div>
-
-					<div class="battle-preview-side">
-						<div class="battle-preview-title">Carte choisie</div>
-						<div class="battle-preview-subtitle">
-							{{ getBattleChoiceLabel({ value: battleSelectedValue, suit: battleSelectedSuit }) }}
 						</div>
-
-						<button class="battle-random-button-modern" @click="randomizeBattleChoice">
-							🎲 Random
-						</button>
 					</div>
+				</div>
+			</div>
 
+		</div>
+	</div>
+
+	<div v-if="battleSetupOpen" class="battle-setup-overlay">
+		<div class="battle-setup battle-setup-modern">
+
+			<button class="choice-popup-close" @click="battleSetupOpen = false">
+				×
+			</button>
+
+			<div class="battle-setup-header">
+				<div class="battle-setup-kicker">BATTLE ROYALE</div>
+				<h2>Choisis ta carte</h2>
+				<p>Chaque joueur choisit une carte unique. Le dernier à voir sortir la sienne perd.</p>
+			</div>
+
+			<div class="battle-setup-topbar">
+				<div class="battle-setup-player-badge">
+					<span class="battle-setup-player-label">JOUEUR ACTUEL</span>
+					<strong>{{ battleCurrentPlayer.name }}</strong>
 				</div>
 
-				<div class="battle-choice-section">
-					<div class="battle-choice-label">Valeur</div>
+				<div class="battle-setup-step-badge">
+					{{ battleChoiceIndex + 1 }} / {{ players.length }}
+				</div>
+			</div>
 
-					<div class="battle-value-grid">
-						<button v-for="value in battleValues" :key="value.id" class="battle-choice-chip" :class="{
+			<div class="battle-setup-preview-row">
+
+				<div class="battle-card-preview">
+					<img class="battle-card-preview-image" :src="getBattlePreviewCardImage()" alt="" />
+				</div>
+
+				<div class="battle-preview-side">
+					<div class="battle-preview-title">Carte choisie</div>
+					<div class="battle-preview-subtitle">
+						{{ getBattleChoiceLabel({ value: battleSelectedValue, suit: battleSelectedSuit }) }}
+					</div>
+
+					<button class="battle-random-button-modern" @click="randomizeBattleChoice">
+						🎲 Random
+					</button>
+				</div>
+
+			</div>
+
+			<div class="battle-choice-section">
+				<div class="battle-choice-label">Valeur</div>
+
+				<div class="battle-value-grid">
+					<button v-for="value in battleValues" :key="value.id" class="battle-choice-chip" :class="{
 						active: battleSelectedValue === value.id,
 						disabled: isBattleValueFullyTaken(value.id)
 					}" :disabled="isBattleValueFullyTaken(value.id)" @click="battleSelectedValue = value.id">
-							{{ getBattleValueShortLabel(value.id) }}
-						</button>
-					</div>
+						{{ getBattleValueShortLabel(value.id) }}
+					</button>
 				</div>
+			</div>
 
-				<div class="battle-choice-section">
-					<div class="battle-choice-label">Signe</div>
+			<div class="battle-choice-section">
+				<div class="battle-choice-label">Signe</div>
 
-					<div class="battle-suit-grid">
-						<button v-for="suit in battleSuits" :key="suit.id" class="battle-suit-chip" :class="[
+				<div class="battle-suit-grid">
+					<button v-for="suit in battleSuits" :key="suit.id" class="battle-suit-chip" :class="[
 						getBattleSuitColorClass(suit.id),
 						{
 							active: battleSelectedSuit === suit.id,
 							disabled: isBattleCardTaken(battleSelectedValue, suit.id)
 						}
 					]" :disabled="isBattleCardTaken(battleSelectedValue, suit.id)" @click="battleSelectedSuit = suit.id">
-							<span class="battle-suit-symbol">{{ suit.label }}</span>
-						</button>
-					</div>
-				</div>
-
-				<div class="battle-setup-actions">
-					<button class="battle-confirm-button" @click="confirmBattleChoice">
-						Valider cette carte
+						<span class="battle-suit-symbol">{{ suit.label }}</span>
 					</button>
 				</div>
-
 			</div>
-		</div>
 
-		<div v-if="battleStackViewOpen" class="discard-view-overlay" @click.self="closeBattleStackView">
-			<div class="discard-view">
-
-				<button class="close-discard-view" @click="closeBattleStackView">×</button>
-
-				<h2>Cartes Battle Royale</h2>
-
-				<div class="discard-fan" @mousemove="updateHoveredBattleStackCard"
-					@mouseleave="hoveredBattleStackCardIndex = null">
-					<div v-for="(card, index) in cardsInPlay" :key="card.uniqueKey + '-battle-fan'"
-						class="discard-fan-card-wrapper" :style="getBattleStackFanCardStyle(index)">
-						<div class="discard-fan-card-frame">
-							<img class="discard-fan-card" :src="getCardDisplayImage(card)" />
-
-							<div v-if="card && card.battleMatched" class="holo-mask"
-								:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
-							</div>
-						</div>
-					</div>
-				</div>
-
-			</div>
-		</div>
-
-		<div v-if="gamePopup.open" class="game-popup-overlay">
-			<div class="game-popup">
-
-				<button class="game-popup-close" @click="closeGamePopup">×</button>
-
-				<h2 v-if="gamePopup.title">
-					{{ gamePopup.title }}
-				</h2>
-
-				<p v-if="gamePopup.message" class="game-popup-message">
-					{{ gamePopup.message }}
-				</p>
-
-				<div v-if="gamePopup.sips !== null && gamePopup.shots !== null" class="popup-stats">
-
-					<div class="popup-stat-card">
-						<div class="popup-stat-icon">🍺</div>
-
-						<div class="popup-stat-content">
-							<div class="popup-stat-value">{{ gamePopup.sips }}</div>
-							<div class="popup-stat-label">Gorgées</div>
-						</div>
-					</div>
-
-					<div class="popup-stat-separator">
-						OU
-					</div>
-
-					<div class="popup-stat-card">
-						<div class="popup-stat-icon">🥃</div>
-
-						<div class="popup-stat-content">
-							<div class="popup-stat-value">{{ gamePopup.shots }}</div>
-
-							<div class="popup-stat-label">
-								Shot<span v-if="gamePopup.shots > 1">s</span>
-							</div>
-
-							<div v-if="gamePopup.remainingSips > 0" class="popup-stat-extra">
-								+ {{ gamePopup.remainingSips }} 🍺
-							</div>
-						</div>
-					</div>
-
-				</div>
-
-			</div>
-		</div>
-
-		<div v-if="choicePopup.open" class="choice-popup-overlay" @click.self="closeChoicePopup">
-			<div class="choice-popup">
-
-				<button class="choice-popup-close" @click="closeChoicePopup">
-					×
+			<div class="battle-setup-actions">
+				<button class="battle-confirm-button" @click="confirmBattleChoice">
+					Valider cette carte
 				</button>
+			</div>
 
-				<h2>{{ choicePopup.title }}</h2>
+		</div>
+	</div>
 
-				<p v-if="choicePopup.message">
-					{{ choicePopup.message }}
-				</p>
+	<div v-if="battleStackViewOpen" class="discard-view-overlay" @click.self="closeBattleStackView">
+		<div class="discard-view">
 
-				<div v-if="choicePopup.type === 'buttons'" class="choice-popup-buttons">
-					<button v-for="option in choicePopup.options" :key="option.value" :class="option.className"
-						@click="confirmChoice(option.value)">
-						{{ option.label }}
-					</button>
+			<button class="close-discard-view" @click="closeBattleStackView">×</button>
+
+			<h2>Cartes Battle Royale</h2>
+
+			<div class="discard-fan" @mousemove="updateHoveredBattleStackCard"
+				@mouseleave="hoveredBattleStackCardIndex = null">
+				<div v-for="(card, index) in cardsInPlay" :key="card.uniqueKey + '-battle-fan'"
+					class="discard-fan-card-wrapper" :style="getBattleStackFanCardStyle(index)">
+					<div class="discard-fan-card-frame">
+						<img class="discard-fan-card" :src="getCardDisplayImage(card)" />
+
+						<div v-if="card && card.battleMatched" class="holo-mask"
+							:class="{ 'holo-mask-ready': isHoloMaskReady(card) }" :style="getHoloMaskStyle(card)">
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<div v-if="gamePopup.open" class="game-popup-overlay">
+		<div class="game-popup">
+
+			<button class="game-popup-close" @click="closeGamePopup">×</button>
+
+			<h2 v-if="gamePopup.title">
+				{{ gamePopup.title }}
+			</h2>
+
+			<p v-if="gamePopup.message" class="game-popup-message">
+				{{ gamePopup.message }}
+			</p>
+
+			<div v-if="gamePopup.sips !== null && gamePopup.shots !== null" class="popup-stats">
+
+				<div class="popup-stat-card">
+					<div class="popup-stat-icon">🍺</div>
+
+					<div class="popup-stat-content">
+						<div class="popup-stat-value">{{ gamePopup.sips }}</div>
+						<div class="popup-stat-label">Gorgées</div>
+					</div>
 				</div>
 
-				<div v-if="choicePopup.type === 'card'" class="choice-popup-card-select">
-					<select v-model="choicePopup.selectedValue">
-						<option v-for="value in battleValues" :key="value.id" :value="value.id">
-							{{ value.label }}
-						</option>
-					</select>
+				<div class="popup-stat-separator">
+					OU
+				</div>
 
-					<select v-model="choicePopup.selectedSuit"
-						:class="getBattleSuitColorClass(choicePopup.selectedSuit)">
-						<option v-for="suit in battleSuits" :key="suit.id" :value="suit.id"
-							:class="getBattleSuitColorClass(suit.id)">
-							{{ suit.label }}
-						</option>
-					</select>
+				<div class="popup-stat-card">
+					<div class="popup-stat-icon">🥃</div>
 
-					<button @click="confirmChoice({
+					<div class="popup-stat-content">
+						<div class="popup-stat-value">{{ gamePopup.shots }}</div>
+
+						<div class="popup-stat-label">
+							Shot<span v-if="gamePopup.shots > 1">s</span>
+						</div>
+
+						<div v-if="gamePopup.remainingSips > 0" class="popup-stat-extra">
+							+ {{ gamePopup.remainingSips }} 🍺
+						</div>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+	</div>
+
+	<div v-if="choicePopup.open" class="choice-popup-overlay" @click.self="closeChoicePopup">
+		<div class="choice-popup">
+
+			<button class="choice-popup-close" @click="closeChoicePopup">
+				×
+			</button>
+
+			<h2>{{ choicePopup.title }}</h2>
+
+			<p v-if="choicePopup.message">
+				{{ choicePopup.message }}
+			</p>
+
+			<div v-if="choicePopup.type === 'buttons'" class="choice-popup-buttons">
+				<button v-for="option in choicePopup.options" :key="option.value" :class="option.className"
+					@click="confirmChoice(option.value)">
+					{{ option.label }}
+				</button>
+			</div>
+
+			<div v-if="choicePopup.type === 'card'" class="choice-popup-card-select">
+				<select v-model="choicePopup.selectedValue">
+					<option v-for="value in battleValues" :key="value.id" :value="value.id">
+						{{ value.label }}
+					</option>
+				</select>
+
+				<select v-model="choicePopup.selectedSuit" :class="getBattleSuitColorClass(choicePopup.selectedSuit)">
+					<option v-for="suit in battleSuits" :key="suit.id" :value="suit.id"
+						:class="getBattleSuitColorClass(suit.id)">
+						{{ suit.label }}
+					</option>
+				</select>
+
+				<button @click="confirmChoice({
 				value: choicePopup.selectedValue,
 				suit: choicePopup.selectedSuit
 			})">
-						Valider
-					</button>
-				</div>
-
-			</div>
-		</div>
-
-		<div v-if="settingsOpen" class="settings-overlay" @click.self="settingsOpen = false">
-			<div class="settings-window">
-
-				<button class="settings-close" @click="settingsOpen = false">
-					×
-				</button>
-
-				<h2>Options</h2>
-
-				<div class="settings-row settings-column">
-					<label>Style de cartes</label>
-
-					<div class="card-theme-grid">
-						<button v-for="theme in availableCardThemes" :key="theme.id" class="card-theme-choice"
-							:class="{ active: cardTheme === theme.id }" @click="cardTheme = theme.id">
-							<img class="card-theme-back" :src="getCardThemeBackImage(theme.id)" :alt="theme.label" />
-
-							<span class="card-theme-label">
-								{{ theme.label }}
-							</span>
-						</button>
-					</div>
-				</div>
-
-				<div class="settings-row settings-column">
-					<label>Couleur du tapis</label>
-
-					<div class="playmat-color-grid">
-						<label>
-							Haut
-							<input type="color" v-model="playmatColors.main">
-						</label>
-
-						<label>
-							Milieu
-							<input type="color" v-model="playmatColors.mid">
-						</label>
-
-						<label>
-							Bas
-							<input type="color" v-model="playmatColors.dark">
-						</label>
-					</div>
-				</div>
-
-				<div class="settings-row settings-column">
-					<label>Presets tapis</label>
-
-					<div class="playmat-preset-row">
-						<select v-model="selectedPlaymatPresetId">
-							<option v-for="preset in playmatPresets" :key="preset.id" :value="preset.id">
-								{{ preset.name }}
-							</option>
-						</select>
-
-						<button @click="applySelectedPlaymatPreset">
-							Appliquer
-						</button>
-
-						<button class="delete-playmat-preset-button"
-							:disabled="isBasePlaymatPreset(selectedPlaymatPresetId)"
-							@click="deleteSelectedPlaymatPreset">
-							Supprimer
-						</button>
-					</div>
-
-					<div class="playmat-preset-row">
-						<input type="text" v-model="playmatPresetName" placeholder="Nom du preset">
-
-						<button @click="savePlaymatPreset">
-							Enregistrer
-						</button>
-					</div>
-				</div>
-
-				<div class="settings-row">
-					<label>Pop-up de résultat</label>
-
-					<button class="settings-toggle" :class="{ active: gamePopupsEnabled }"
-						@click="gamePopupsEnabled = !gamePopupsEnabled">
-						{{ gamePopupsEnabled ? "Activées" : "Désactivées" }}
-					</button>
-				</div>
-
-			</div>
-		</div>
-
-		<div v-if="sipDistributionPopup.open" class="choice-popup-overlay">
-			<div class="choice-popup sip-popup">
-
-				<button class="choice-popup-close" @click="closeSipDistribution">
-					×
-				</button>
-
-				<h2>Distribuer les gorgées 🍺</h2>
-
-				<p>
-					Il reste
-					<strong>{{ sipDistributionPopup.remainingSips }}</strong>
-					gorgée(s) à distribuer.
-				</p>
-
-				<div class="sip-player-grid">
-
-					<div v-for="player in distributablePlayers" :key="player.id" class="sip-player-card">
-
-						<div class="sip-player-name">
-							{{ player.name }}
-						</div>
-
-						<div class="sip-player-count">
-							{{ getDistributedSips(player.id) }}
-						</div>
-
-						<div class="sip-buttons-row">
-
-							<button class="sip-round-button sip-minus" @click="removeSipFromPlayer(player)">
-								−
-							</button>
-
-							<button class="sip-round-button sip-plus" @click="addSipToPlayer(player)">
-								+
-							</button>
-
-						</div>
-
-						<button class="sip-all-button" @click="addAllSipsToPlayer(player)">
-							Tout
-						</button>
-
-					</div>
-
-				</div>
-
-				<button class="sip-validate-button" :disabled="sipDistributionPopup.remainingSips > 0"
-					@click="validateSipDistribution">
 					Valider
 				</button>
-
 			</div>
+
 		</div>
+	</div>
 
-		<div v-if="shotDistributionPopup.open" class="choice-popup-overlay">
-			<div class="choice-popup shot-popup">
+	<div v-if="settingsOpen" class="settings-overlay" @click.self="settingsOpen = false">
+		<div class="settings-window">
 
-				<button class="choice-popup-close" @click="shotDistributionPopup.open = false">
-					×
+			<button class="settings-close" @click="settingsOpen = false">
+				×
+			</button>
+
+			<h2>Options</h2>
+
+			<div class="settings-row settings-column">
+				<label>Style de cartes</label>
+
+				<div class="card-theme-grid">
+					<button v-for="theme in availableCardThemes" :key="theme.id" class="card-theme-choice"
+						:class="{ active: cardTheme === theme.id }" @click="cardTheme = theme.id">
+						<img class="card-theme-back" :src="getCardThemeBackImage(theme.id)" :alt="theme.label" />
+
+						<span class="card-theme-label">
+							{{ theme.label }}
+						</span>
+					</button>
+				</div>
+			</div>
+
+			<div class="settings-row settings-column">
+				<label>Couleur du tapis</label>
+
+				<div class="playmat-color-grid">
+					<label>
+						Haut
+						<input type="color" v-model="playmatColors.main">
+					</label>
+
+					<label>
+						Milieu
+						<input type="color" v-model="playmatColors.mid">
+					</label>
+
+					<label>
+						Bas
+						<input type="color" v-model="playmatColors.dark">
+					</label>
+				</div>
+			</div>
+
+			<div class="settings-row settings-column">
+				<label>Presets tapis</label>
+
+				<div class="playmat-preset-row">
+					<select v-model="selectedPlaymatPresetId">
+						<option v-for="preset in playmatPresets" :key="preset.id" :value="preset.id">
+							{{ preset.name }}
+						</option>
+					</select>
+
+					<button @click="applySelectedPlaymatPreset">
+						Appliquer
+					</button>
+
+					<button class="delete-playmat-preset-button"
+						:disabled="isBasePlaymatPreset(selectedPlaymatPresetId)" @click="deleteSelectedPlaymatPreset">
+						Supprimer
+					</button>
+				</div>
+
+				<div class="playmat-preset-row">
+					<input type="text" v-model="playmatPresetName" placeholder="Nom du preset">
+
+					<button @click="savePlaymatPreset">
+						Enregistrer
+					</button>
+				</div>
+			</div>
+
+			<div class="settings-row">
+				<label>Pop-up de résultat</label>
+
+				<button class="settings-toggle" :class="{ active: gamePopupsEnabled }"
+					@click="gamePopupsEnabled = !gamePopupsEnabled">
+					{{ gamePopupsEnabled ? "Activées" : "Désactivées" }}
 				</button>
+			</div>
 
-				<h2>Donner un shot 🥃</h2>
+		</div>
+	</div>
 
-				<p>
-					Choisis le joueur qui prend
-					<strong>{{ shotDistributionPopup.shots }}</strong>
-					shot.
-				</p>
+	<div v-if="sipDistributionPopup.open" class="choice-popup-overlay">
+		<div class="choice-popup sip-popup">
 
-				<div class="shot-player-grid">
+			<button class="choice-popup-close" @click="closeSipDistribution">
+				×
+			</button>
 
-					<button v-for="player in shotDistributablePlayers" :key="player.id" class="shot-player-button"
-						@click="giveShotsToPlayer(player)">
+			<h2>Distribuer les gorgées 🍺</h2>
+
+			<p>
+				Il reste
+				<strong>{{ sipDistributionPopup.remainingSips }}</strong>
+				gorgée(s) à distribuer.
+			</p>
+
+			<div class="sip-player-grid">
+
+				<div v-for="player in distributablePlayers" :key="player.id" class="sip-player-card">
+
+					<div class="sip-player-name">
 						{{ player.name }}
+					</div>
+
+					<div class="sip-player-count">
+						{{ getDistributedSips(player.id) }}
+					</div>
+
+					<div class="sip-buttons-row">
+
+						<button class="sip-round-button sip-minus" @click="removeSipFromPlayer(player)">
+							−
+						</button>
+
+						<button class="sip-round-button sip-plus" @click="addSipToPlayer(player)">
+							+
+						</button>
+
+					</div>
+
+					<button class="sip-all-button" @click="addAllSipsToPlayer(player)">
+						Tout
 					</button>
 
 				</div>
 
 			</div>
+
+			<button class="sip-validate-button" :disabled="sipDistributionPopup.remainingSips > 0"
+				@click="validateSipDistribution">
+				Valider
+			</button>
+
 		</div>
+	</div>
 
-		<div class="sip-pop-layer">
+	<div v-if="shotDistributionPopup.open" class="choice-popup-overlay">
+		<div class="choice-popup shot-popup">
 
-			<div v-for="animation in playerSipAnimations" v-show="animation.visible !== false" :key="animation.id"
-				class="player-sips-pop-anchor" :style="{
+			<button class="choice-popup-close" @click="shotDistributionPopup.open = false">
+				×
+			</button>
+
+			<h2>Donner un shot 🥃</h2>
+
+			<p>
+				Choisis le joueur qui prend
+				<strong>{{ shotDistributionPopup.shots }}</strong>
+				shot.
+			</p>
+
+			<div class="shot-player-grid">
+
+				<button v-for="player in shotDistributablePlayers" :key="player.id" class="shot-player-button"
+					@click="giveShotsToPlayer(player)">
+					{{ player.name }}
+				</button>
+
+			</div>
+
+		</div>
+	</div>
+
+	<div class="sip-pop-layer">
+
+		<div v-for="animation in playerSipAnimations" v-show="animation.visible !== false" :key="animation.id"
+			class="player-sips-pop-anchor" :style="{
 			left: animation.x + 'px',
 			top: animation.y + 'px'
 		}">
-				<div class="player-sips-pop-outside" :style="{
+			<div class="player-sips-pop-outside" :style="{
 				'--sip-rotation': animation.rotation + 'deg',
 				'--sip-offset': animation.offset + 'px'
 			}">
-					+{{ animation.amount }}
-				</div>
+				+{{ animation.amount }}
 			</div>
-
 		</div>
+
+	</div>
 
 	</div>
 

@@ -1,3 +1,82 @@
+// =========================
+// Constantes globales
+// =========================
+
+const ACTION_COSTS = Object.freeze({
+	plus: 1,
+	minus: 1,
+	equal: 1,
+	color: 1,
+	suit: 1,
+	value: 1,
+	card: 1,
+
+	fion: 2,
+	purple: 2,
+	combat: 2,
+
+	perfect: 3,
+	cachecache: 3,
+
+	ouais: 4,
+	jumelles: 4,
+	jack: 4,
+
+	pinte: 5,
+	freres: 6,
+	damidot: 8,
+	sexe: 10
+});
+
+const ACTION_DISPLAY_LABELS = Object.freeze({
+	damidot: "Valérie Damidot",
+	ouais: "Ouais t'inquiètes",
+	sexe: "Cul Sexe Amour"
+});
+
+const MOVE_EMOJIS = Object.freeze({
+	purple: "🟣",
+	fion: "🍑",
+	ouais: "🔥",
+	jumelles: "👯",
+	jack: "🃏",
+	pinte: "🍺",
+	freres: "💨",
+	sexe: "😏",
+	combat: "⚔️",
+	perfect: "✨",
+	cachecache: "🫣",
+	damidot: "🎀"
+});
+
+const SUIT_LABELS = Object.freeze({
+	hearts: "♥",
+	diamonds: "♦",
+	clubs: "♣",
+	spades: "♠"
+});
+
+const BATTLE_SHORT_LABELS = Object.freeze({
+	ace: "A",
+	jack: "J",
+	queen: "D",
+	king: "K"
+});
+
+const CARD_TEXTURE_VALUES = Object.freeze({
+	ace: "a",
+	jack: "j",
+	queen: "q",
+	king: "k"
+});
+
+const CARD_TEXTURE_SUITS = Object.freeze({
+	hearts: "h",
+	diamonds: "d",
+	clubs: "c",
+	spades: "s"
+});
+
 var app = new Vue({
 
 	el: '#app',
@@ -321,14 +400,6 @@ var app = new Vue({
 
 		},
 
-		currentCardThemeNeedsMask() {
-
-			if (!this.currentCardThemeConfig)
-				return false;
-
-			return this.currentCardThemeConfig.readytoplay === false;
-
-		},
 
 		predictionActions() {
 
@@ -641,13 +712,6 @@ var app = new Vue({
 
 		},
 
-		cardsContainerStyle() {
-
-			return {
-				gap: `${this.dynamicCardGap}px`
-			};
-
-		},
 
 		maxCardsPerRow() {
 
@@ -760,50 +824,14 @@ var app = new Vue({
 		},
 
 		getActionCardCost(actionId) {
-
-			const costs = {
-				plus: 1,
-				minus: 1,
-				equal: 1,
-				color: 1,
-				suit: 1,
-				value: 1,
-				card: 1,
-
-				fion: 2,
-				purple: 2,
-				combat: 2,
-
-				perfect: 3,
-				cachecache: 3,
-
-				ouais: 4,
-				jumelles: 4,
-				jack: 4,
-
-				pinte: 5,
-				freres: 6,
-				damidot: 8,
-				sexe: 10
-			};
-
-			return costs[actionId] || 1;
-
+			return ACTION_COSTS[actionId] || 1;
 		},
 
 		getActionDisplayLabel(action) {
-
 			if (!action)
 				return "";
 
-			const labels = {
-				damidot: "Valérie Damidot",
-				ouais: "Ouais t'inquiètes",
-				sexe: "Cul Sexe Amour"
-			};
-
-			return labels[action.id] || action.label;
-
+			return ACTION_DISPLAY_LABELS[action.id] || action.label;
 		},
 
 		isActionDisabled(action) {
@@ -828,24 +856,7 @@ var app = new Vue({
 		},
 
 		getMoveEmoji(actionId) {
-
-			const emojis = {
-				purple: "🟣",
-				fion: "🍑",
-				ouais: "🔥",
-				jumelles: "👯",
-				jack: "🃏",
-				pinte: "🍺",
-				freres: "💨",
-				sexe: "😏",
-				combat: "⚔️",
-				perfect: "✨",
-				cachecache: "🫣",
-				damidot: "🎀"
-			};
-
-			return emojis[actionId] || "🎴";
-
+			return MOVE_EMOJIS[actionId] || "🎴";
 		},
 
 		getBattlePreviewCardImage() {
@@ -858,16 +869,7 @@ var app = new Vue({
 		},
 
 		getBattleValueShortLabel(valueId) {
-
-			const labels = {
-				ace: "A",
-				jack: "J",
-				queen: "D",
-				king: "K"
-			};
-
-			return labels[valueId] || valueId;
-
+			return BATTLE_SHORT_LABELS[valueId] || valueId;
 		},
 
 		applyFinalSipDivider(divider) {
@@ -1114,16 +1116,7 @@ var app = new Vue({
 		},
 
 		getSuitLabel(suit) {
-
-			const labels = {
-				hearts: "♥",
-				diamonds: "♦",
-				clubs: "♣",
-				spades: "♠"
-			};
-
-			return labels[suit] || suit;
-
+			return SUIT_LABELS[suit] || suit;
 		},
 
 		applySipMultiplierBonus(multiplier) {
@@ -1682,11 +1675,6 @@ var app = new Vue({
 			];
 		},
 
-		getCardTrackerCellTitle(value, suit) {
-			const isOut = this.isCardOutOfDeck(value.id, suit.id);
-
-			return `${value.label} de ${suit.label} — ${isOut ? "sortie / sur table" : "encore dans le deck"}`;
-		},
 
 		getCardTrackerOutCount() {
 			const outCards = new Set();
@@ -1988,26 +1976,6 @@ var app = new Vue({
 
 		},
 
-		debugGiveRandomSips() {
-
-			if (this.players.length === 0)
-				return;
-
-			const randomPlayerIndex =
-				Math.floor(Math.random() * this.players.length);
-
-			const player =
-				this.players[randomPlayerIndex];
-
-			const randomSips =
-				Math.floor(Math.random() * 10) + 1;
-
-			this.addSipsToPlayer(
-				player,
-				randomSips
-			);
-
-		},
 
 		hasActiveSipAnimation(playerId) {
 
@@ -2114,7 +2082,7 @@ var app = new Vue({
 					/*
 						Le point d'ancrage est proche du bord gauche
 						de la fiche joueur.
-						
+
 						Le texte est ensuite aligné à droite sur ce point,
 						donc +1000 grandit vers la gauche et ne mange pas
 						la fiche joueur.
@@ -4844,25 +4812,6 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 
 		},
 
-		debugDealAllCards() {
-
-			if (this.deck.length === 0)
-				return;
-
-			const delay = 45;
-
-			const interval = setInterval(() => {
-
-				if (this.deck.length === 0) {
-					clearInterval(interval);
-					return;
-				}
-
-				this.drawCardFaceUp();
-
-			}, delay);
-
-		},
 
 		openDiscardView() {
 
@@ -5082,25 +5031,11 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 		},
 
 		getCardTextureValue(value) {
-			const valueMap = {
-				ace: "a",
-				jack: "j",
-				queen: "q",
-				king: "k"
-			};
-
-			return valueMap[value] || value;
+			return CARD_TEXTURE_VALUES[value] || value;
 		},
 
 		getCardTextureSuit(suit) {
-			const suitMap = {
-				hearts: "h",
-				diamonds: "d",
-				clubs: "c",
-				spades: "s"
-			};
-
-			return suitMap[suit] || suit;
+			return CARD_TEXTURE_SUITS[suit] || suit;
 		},
 
 		getCardTextureName(value, suit) {
@@ -6378,6 +6313,11 @@ ${loser.name} perd le Ouais t'inquiètes 👎.`,
 		window.removeEventListener(
 			"resize",
 			this.updateSipAnimationPositions
+		);
+
+		window.removeEventListener(
+			"resize",
+			this.updatePlayAreaSize
 		);
 
 		window.removeEventListener("keydown", this.handleKeyDown);
