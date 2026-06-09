@@ -31,7 +31,7 @@ const ACTION_COSTS = Object.freeze({
 const ACTION_DISPLAY_LABELS = Object.freeze({
 	damidot: "Valérie Damidot",
 	ouais: "Ouais t'inquiètes",
-	sexe: "Cul Sexe Amour"
+	sexe: "Cul, Sexe, Amour"
 });
 
 const MOVE_EMOJIS = Object.freeze({
@@ -75,6 +75,21 @@ const CARD_TEXTURE_SUITS = Object.freeze({
 	diamonds: "d",
 	clubs: "c",
 	spades: "s"
+});
+
+const CARD_SCORE_VALUES = Object.freeze({
+	"2": 2,
+	"3": 3,
+	"4": 4,
+	"5": 5,
+	"6": 6,
+	"7": 7,
+	"8": 8,
+	"9": 9,
+	"10": 10,
+	jack: 10,
+	queen: 10,
+	king: 10
 });
 
 var app = new Vue({
@@ -926,22 +941,7 @@ var app = new Vue({
 
 			}
 
-			const values = {
-				"2": 2,
-				"3": 3,
-				"4": 4,
-				"5": 5,
-				"6": 6,
-				"7": 7,
-				"8": 8,
-				"9": 9,
-				"10": 10,
-				jack: 11,
-				queen: 12,
-				king: 13
-			};
-
-			return values[card.value] || 0;
+			return CARD_SCORE_VALUES[card.value] || 0;
 
 		},
 
@@ -1035,6 +1035,27 @@ var app = new Vue({
 				return;
 
 			this.damidotPhase = "ready-to-resolve";
+
+		},
+
+		getCardScoreValue(card, aceMode = null) {
+
+			if (!card)
+				return 0;
+
+			if (card.value === "ace") {
+
+				if (aceMode === "low")
+					return 1;
+
+				if (aceMode === "high")
+					return 11;
+
+				return 11;
+
+			}
+
+			return CARD_SCORE_VALUES[card.value] || 0;
 
 		},
 
@@ -3139,7 +3160,8 @@ var app = new Vue({
 
 				}
 
-				const value = this.getCardPower(card);
+				const value =
+					this.getCardScoreValue(card);
 
 				sums = sums.map(sum => {
 					return sum + value;
